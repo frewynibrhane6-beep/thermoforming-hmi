@@ -21,7 +21,7 @@ jobs:
           node-version: "20"
 
       - name: Install Cordova
-        run: npm install -g cordova@12
+        run: npm install -g cordova@11
 
       - name: Setup Cordova and Inject Code
         run: |
@@ -43,7 +43,7 @@ jobs:
       - name: Build debug APK
         working-directory: tmp_project
         run: |
-          cordova platform add android@13
+          cordova platform add android@10.1.2
           cordova plugin add cordovarduino
           cordova build android --debug
 
