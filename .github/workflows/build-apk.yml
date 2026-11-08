@@ -1,269 +1,35 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-select=none">
-    <title>GEAR Electromechanical Engineering HMI</title>
-    <style>
-        :root {
-            --bg-main: #0b111e;
-            --panel: #131c2e;
-            --accent-blue: #3b82f6;
-            --accent-green: #10b981;
-            --accent-red: #ef4444;
-            --text-main: #f3f4f6;
-            --text-muted: #9ca3af;
-        }
-        * { box-sizing: border-box; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
-        body {
-            background-color: var(--bg-main);
-            color: var(--text-main);
-            margin: 0;
-            padding: 12px;
-            overflow: hidden;
-            height: 100vh;
-        }
-        .app-container {
-            display: grid;
-            grid-template-rows: auto 1fr auto;
-            height: 100%;
-            gap: 10px;
-        }
-        .header-bar {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            background: var(--panel);
-            padding: 8px 16px;
-            border-radius: 12px;
-            border: 1px solid #1e293b;
-        }
-        .logo-section { display: flex; align-items: center; gap: 12px; }
-        
-        /* 🖼️ የክብ አርማ ፎቶ ማስቀመጫ ስታይል */
-        .app-logo-img {
-            width: 45px;
-            height: 45px;
-            border-radius: 50%;
-            object-fit: cover;
-            border: 2px solid var(--accent-blue);
-            box-shadow: 0 0 8px rgba(59, 130, 246, 0.5);
-        }
-
-        .title-text h1 { font-size: 15px; margin: 0; font-weight: 700; color: var(--accent-blue); letter-spacing: 0.5px; }
-        .title-text p { font-size: 11px; margin: 0; color: var(--text-muted); }
-        .top-stats { display: flex; gap: 20px; font-size: 12px; color: var(--text-muted); }
-        .top-stats span strong { color: var(--accent-green); }
-        .status-badge {
-            background: rgba(59, 130, 246, 0.2);
-            color: #60a5fa;
-            padding: 6px 14px;
-            border-radius: 8px;
-            font-weight: bold;
-            font-size: 13px;
-            letter-spacing: 1px;
-        }
-        .main-layout {
-            display: grid;
-            grid-template-columns: 1.3fr 1.7fr;
-            gap: 10px;
-            height: 100%;
-        }
-        .left-area, .right-area {
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-        }
-        .view-panel {
-            background: var(--panel);
-            flex: 1;
-            border-radius: 12px;
-            border: 1px solid #1e293b;
-            padding: 15px;
-            position: relative;
-        }
-        .panel-title { font-size: 11px; color: var(--text-muted); text-transform: uppercase; font-weight: bold; margin-bottom: 10px; }
-        
-        .simulation-container {
-            width: 100%;
-            height: 85%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            position: relative;
-        }
-        .machine-graphic {
-            width: 160px;
-            height: 100px;
-            border: 3px solid #334155;
-            border-top: none;
-            position: relative;
-            border-radius: 0 0 12px 12px;
-        }
-        .sheet-layer {
-            position: absolute;
-            top: 0;
-            left: -15px;
-            width: 190px;
-            height: 5px;
-            background: #64748b;
-            transition: all 0.4s ease;
-        }
-        .sheet-layer.heating { background: #ff4500; box-shadow: 0 0 12px #ff4500; }
-        .sheet-layer.forming {
-            top: 50px;
-            height: 48px;
-            width: 154px;
-            left: 0;
-            border: 4px solid #ff4500;
-            border-top: none;
-            background: transparent;
-            border-radius: 0 0 8px 8px;
-        }
-        
-        .grid-buttons {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 8px;
-        }
-        .control-indicator {
-            background: #1e293b;
-            padding: 12px;
-            border-radius: 8px;
-            text-align: center;
-            font-size: 11px;
-            color: var(--text-muted);
-            border: 1px solid #334155;
-            font-weight: 600;
-        }
-        .control-indicator.active {
-            background: rgba(16, 185, 129, 0.15);
-            color: var(--accent-green);
-            border-color: var(--accent-green);
-            box-shadow: 0 0 8px rgba(16, 185, 129, 0.2);
-        }
-        .footer-actions {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-        .action-btn {
-            background: #1e293b;
-            color: white;
-            border: 1px solid #334155;
-            padding: 14px 28px;
-            border-radius: 10px;
-            font-weight: bold;
-            font-size: 15px;
-            cursor: pointer;
-        }
-        .action-btn.start {
-            background: rgba(16, 185, 129, 0.2);
-            color: #34d399;
-            border-color: #059669;
-        }
-        
-        /* Modal Sheet */
-        .modal-overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100vw;
-            height: 100vh;
-            background: rgba(0, 0, 0, 0.8);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            z-index: 1000;
-            opacity: 0;
-            pointer-events: none;
-            transition: opacity 0.2s ease;
-        }
-        .modal-overlay.open { opacity: 1; pointer-events: auto; }
-        .modal-window {
-            background: var(--panel);
-            border: 1px solid #334155;
-            border-radius: 16px;
-            width: 480px;
-            padding: 22px;
-        }
-        .modal-window h2 { font-size: 18px; margin-top: 0; margin-bottom: 15px; border-bottom: 1px solid #2d3748; padding-bottom: 8px; }
-        .setting-row {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            margin-bottom: 12px;
-        }
-        .setting-info h3 { font-size: 14px; margin: 0; font-weight: 600; }
-        .setting-info p { font-size: 11px; margin: 2px 0 0 0; color: var(--text-muted); }
-        .value-picker { display: flex; align-items: center; gap: 12px; }
-        .picker-btn {
-            width: 34px;
-            height: 34px;
-            background: var(--accent-blue);
-            color: white;
-            border: none;
-            border-radius: 8px;
-            font-size: 18px;
-            font-weight: bold;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-        .display-val { font-size: 15px; font-weight: bold; width: 65px; text-align: center; }
-        .modal-footer { display: flex; gap: 10px; margin-top: 20px; }
-        .modal-footer button { flex: 1; padding: 12px; border-radius: 8px; font-weight: bold; border: none; cursor: pointer; }
-    </style>
-</head>
-<body>
-
-    <div class="app-container">
-        <!-- Header -->
-        <div class="header-bar">
-            <div class="logo-section">
-                <!-- 🖼️ አዲሱ የአርማ ፎቶ እዚህ እንዲታይ ተደርጓል -->
-                <img class="app-logo-img" src="logo.png" alt="GEAR Logo">
-                <div class="title-text">
-                    <h1>GEAR ELECTROMECHANICAL ENGINEERING</h1>
-                    <p>Thermoforming machine control</p>
-                </div>
-            </div>
-            <div class="top-stats">
-                <span>Fan Time: <strong id="topFanDisplay">30 s</strong></span>
-                <span>Total Produced: <strong id="topCyclesDisplay">0</strong></span>
-            </div>
-            <div class="status-badge" id="machineStatus">READY</div>
-        </div>
-
-        <!-- Main Graphics Layout -->
-        <div class="main-layout">
-            <div class="left-area">
-                <div class="view-panel">
-                    <div class="panel-title">Live Machine Simulation</div>
-                    <div class="simulation-container">
-                        <div class="machine-graphic">
-                            <div class="sheet-layer" id="sheetSim"></div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            <div class="right-area">
-                <div class="view-panel" style="display: flex; flex-direction: column; justify-content: center; gap: 10px;">
-                    <div class="panel-title">Relay Status Indicators</div>
-                    <div class="grid-buttons">
-                        <div class="control-indicator" id="indHeaterIn">HEATER_IN</div>
-                        <div class="control-indicator" id="indHeaterOut">HEATER_OUT</div>
-                        <div class="control-indicator" id="indMoldUp">MOLD_UP</div>
-                        <div class="control-indicator" id="indVacuum">VACUUM</div>
-                        <div class="control-indicator" id="indFan">COOLING_FAN</div>
-                        <div class="control-indicator" id="indRelease">RELEASE</div>
-                    </div>
-                    <div id="connLog" style="font-size:11px; font-family:monospace; color:var(--text-muted); background:#0b111e; padding:8px; border-radius:6px; border:1px solid #1e293b; margin-top:5px;">USB Status: Disconnected</div>
-                </div>
-            </div>
-        </div>
-
-        <div class="footer-actions">
-            <button class="action-btn start" id="startBtn">START CYCLE</button>
-            <button class="action-btn" id="openSettingsBtn" style="background:#131c2e; color:white; border-color:#334155;">⚙️ MACHINE SETTINGS</button>
+name: Build APK
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: 20
+    - name: Setup Java
+      uses: actions/setup-java@v4
+      with:
+        distribution: temurin
+        java-version: 17
+    - name: Build Cordova APK
+      run: |
+        npm install -g cordova
+        cordova create app com.thermo.hmi2 "Thermoforming HMI v2"
+        cd app
+        cp ../index.html www/index.html
+        cp ../logo.png www/logo.png
+        sed -i 's#</widget>#<preference name="Orientation" value="landscape" /><preference name="Fullscreen" value="true" /><preference name="android-minSdkVersion" value="24" /></widget>#' config.xml
+        cordova platform add android@13
+        cordova plugin add cordovarduino
+        cordova build android --debug
+    - name: Upload APK
+      uses: actions/upload-artifact@v4
+      with:
+        name: thermoforming-hmi-apk-v2
+        path: app/platforms/android/app/build/outputs/apk/debug/app-debug.apk
