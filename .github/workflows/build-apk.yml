@@ -1,283 +1,34 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-select=none">
-    <title>Thermoforming Machine Control</title>
-    <style>
-        :root {
-            --bg-main: #0b111e;
-            --panel: #131c2e;
-            --accent-blue: #3b82f6;
-            --accent-green: #10b981;
-            --accent-red: #ef4444;
-            --text-main: #f3f4f6;
-            --text-muted: #9ca3af;
-        }
-        * { box-sizing: border-box; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
-        body {
-            background-color: var(--bg-main);
-            color: var(--text-main);
-            margin: 0;
-            padding: 12px;
-            overflow: hidden;
-            height: 100vh;
-        }
-        .app-container {
-            display: grid;
-            grid-template-rows: auto 1fr auto;
-            height: 100%;
-            gap: 10px;
-        }
-        .header-bar {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            background: var(--panel);
-            padding: 10px 16px;
-            border-radius: 12px;
-            border: 1px solid #1e293b;
-        }
-        .logo-section { display: flex; align-items: center; gap: 10px; }
-        .logo-g {
-            background: var(--accent-red);
-            color: white;
-            font-weight: bold;
-            width: 32px;
-            height: 32px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            border-radius: 8px;
-            font-size: 18px;
-        }
-        .title-text h1 { font-size: 14px; margin: 0; font-weight: 600; }
-        .title-text p { font-size: 11px; margin: 0; color: var(--text-muted); }
-        .top-stats { display: flex; gap: 20px; font-size: 12px; color: var(--text-muted); }
-        .top-stats span strong { color: var(--accent-green); }
-        .status-badge {
-            background: rgba(59, 130, 246, 0.2);
-            color: #60a5fa;
-            padding: 6px 14px;
-            border-radius: 8px;
-            font-weight: bold;
-            font-size: 13px;
-            letter-spacing: 1px;
-        }
-        .main-layout {
-            display: grid;
-            grid-template-columns: 1.2fr 1.8fr;
-            gap: 10px;
-            height: 100%;
-        }
-        .left-area, .right-area {
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-        }
-        .view-panel {
-            background: var(--panel);
-            flex: 1;
-            border-radius: 12px;
-            border: 1px solid #1e293b;
-            padding: 15px;
-            position: relative;
-        }
-        .panel-title { font-size: 11px; color: var(--text-muted); text-transform: uppercase; font-weight: bold; margin-bottom: 10px; }
-        .simulation-container {
-            width: 100%;
-            height: 80%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-        .simulation-box {
-            width: 120px;
-            height: 80px;
-            border: 3px solid #334155;
-            border-top: none;
-            position: relative;
-            border-radius: 0 0 10px 10px;
-        }
-        .plastic-sheet {
-            position: absolute;
-            top: 0;
-            left: -10px;
-            width: 140px;
-            height: 4px;
-            background: #64748b;
-            transition: all 0.5s ease;
-        }
-        .plastic-sheet.heated { background: #ff7a00; box-shadow: 0 0 8px #ff7a00; }
-        .plastic-sheet.formed {
-            top: 40px;
-            height: 40px;
-            width: 114px;
-            left: 0;
-            border: 4px solid #ff7a00;
-            border-top: none;
-            background: transparent;
-            border-radius: 0 0 6px 6px;
-        }
-        .grid-buttons {
-            display: grid;
-            grid-template-columns: repeat(4, 1fr);
-            gap: 8px;
-        }
-        .control-indicator {
-            background: #1e293b;
-            padding: 10px;
-            border-radius: 8px;
-            text-align: center;
-            font-size: 10px;
-            color: var(--text-muted);
-            border: 1px solid #334155;
-        }
-        .control-indicator.active {
-            background: rgba(16, 185, 129, 0.1);
-            color: var(--accent-green);
-            border-color: var(--accent-green);
-        }
-        .footer-actions {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-        .action-btn {
-            background: #1e293b;
-            color: white;
-            border: 1px solid #334155;
-            padding: 14px 28px;
-            border-radius: 10px;
-            font-weight: bold;
-            font-size: 15px;
-            cursor: pointer;
-        }
-        .action-btn.start {
-            background: rgba(16, 185, 129, 0.2);
-            color: #34d399;
-            border-color: #059669;
-        }
-        .action-btn.start:active { background: rgba(16, 185, 129, 0.4); }
-        .action-btn.settings-trigger {
-            background: #1e293b;
-            color: var(--text-main);
-        }
-        
-        /* Modal Settings Sheet */
-        .modal-overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100vw;
-            height: 100vh;
-            background: rgba(0, 0, 0, 0.75);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            z-index: 1000;
-            opacity: 0;
-            pointer-events: none;
-            transition: opacity 0.3s ease;
-        }
-        .modal-overlay.open { opacity: 1; pointer-events: auto; }
-        .modal-window {
-            background: var(--panel);
-            border: 1px solid #334155;
-            border-radius: 16px;
-            width: 460px;
-            padding: 20px;
-            box-shadow: 0 20px 25px -5px rgba(0,0,0,0.5);
-        }
-        .modal-window h2 { font-size: 18px; margin-top: 0; margin-bottom: 15px; border-bottom: 1px solid #2d3748; padding-bottom: 8px; }
-        .setting-row {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            margin-bottom: 12px;
-        }
-        .setting-info { flex: 1; padding-right: 10px; }
-        .setting-info h3 { font-size: 14px; margin: 0; font-weight: 600; }
-        .setting-info p { font-size: 11px; margin: 2px 0 0 0; color: var(--text-muted); }
-        .value-picker { display: flex; align-items: center; gap: 15px; }
-        .picker-btn {
-            width: 32px;
-            height: 32px;
-            background: var(--accent-blue);
-            color: white;
-            border: none;
-            border-radius: 8px;
-            font-size: 18px;
-            font-weight: bold;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-        .picker-btn:active { opacity: 0.8; }
-        .display-val { font-size: 16px; font-weight: bold; width: 60px; text-align: center; }
-        .modal-footer {
-            display: flex;
-            gap: 10px;
-            margin-top: 20px;
-        }
-        .modal-footer button {
-            flex: 1;
-            padding: 12px;
-            border-radius: 8px;
-            font-weight: bold;
-            border: none;
-            cursor: pointer;
-        }
-        .btn-cancel { background: #334155; color: white; }
-        .btn-save { background: var(--accent-green); color: white; }
-    </style>
-</head>
-<body>
-
-    <div class="app-container">
-        <!-- Header -->
-        <div class="header-bar">
-            <div class="logo-section">
-                <div class="logo-g">G</div>
-                <div class="title-text">
-                    <h1>GEAR ELECTROMECHANICAL ENGINEERING</h1>
-                    <p>Thermoforming machine control</p>
-                </div>
-            </div>
-            <div class="top-stats">
-                <span>Fan: <strong id="topFanDisplay">30 s</strong></span>
-                <span>Cycles: <strong id="topCyclesDisplay">0</strong></span>
-            </div>
-            <div class="status-badge" id="machineStatus">READY</div>
-        </div>
-
-        <!-- Main Display Areas -->
-        <div class="main-layout">
-            <div class="left-area">
-                <div class="view-panel">
-                    <div class="panel-title">Last Part #1</div>
-                    <div class="simulation-container">
-                        <div class="simulation-box">
-                            <div class="plastic-sheet" id="sheetSim"></div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            <div class="right-area">
-                <div class="view-panel" style="display: flex; flex-direction: column; justify-content: center; gap: 15px;">
-                    <div class="panel-title">Relay Indicators</div>
-                    <div class="grid-buttons">
-                        <div class="control-indicator" id="indHeaterIn">HEATER_MOVE_IN</div>
-                        <div class="control-indicator" id="indHeaterOut">HEATER_MOVE_OUT</div>
-                        <div class="control-indicator" id="indMoldUp">MOLD_UP_SOL</div>
-                        <div class="control-indicator" id="indVacuum">VACUUM_PUMP</div>
-                        <div class="control-indicator" id="indFan">FAN_RELAY</div>
-                        <div class="control-indicator" id="indRelease">RELEASE_SOL</div>
-                    </div>
-                    <div id="connLog" style="font-size:11px; font-family:monospace; color:var(--text-muted); background:#0b111e; padding:6px; border-radius:6px; border:1px solid #1e293b;">USB Status: Waiting connection...</div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Footer Actions -->
+name: Build APK
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: 20
+    - name: Setup Java
+      uses: actions/setup-java@v4
+      with:
+        distribution: temurin
+        java-version: 17
+    - name: Build Cordova APK
+      run: |
+        npm install -g cordova
+        cordova create app com.thermo.hmi2 "Thermoforming HMI v2"
+        cd app
+        cp ../index.html www/index.html
+        sed -i 's#</widget>#<preference name="Orientation" value="landscape" /><preference name="Fullscreen" value="true" /><preference name="android-minSdkVersion" value="24" /></widget>#' config.xml
+        cordova platform add android@13
+        cordova plugin add cordovarduino
+        cordova build android --debug
+    - name: Upload APK
+      uses: actions/upload-artifact@v4
+      with:
+        name: thermoforming-hmi-apk-v2
+        path: app/platforms/android/app/build/outputs/apk/debug/app-debug.apk
