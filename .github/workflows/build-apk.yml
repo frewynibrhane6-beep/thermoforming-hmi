@@ -1,4 +1,4 @@
-name: Build APk
+name: Build APK
 
 on:
   workflow_dispatch:
@@ -20,23 +20,22 @@ jobs:
         with:
           node-version: "20"
 
-      - uses: android-actions/setup-android@v3
-
-      - name: Install Android platform and build tools
-        run: sdkmanager "platforms;android-34" "build-tools;34.0.0"
-
       - name: Install Cordova
         run: npm install -g cordova@12
 
-      - name: Create app from index.html
+      - name: Setup Cordova Project
         run: |
           cordova telemetry off
-          cordova create hmi com.thermo.hmi "Thermoforming HMI"
-          cp index.html hmi/www/index.html
-          sed -i 's#</widget>#<preference name="Orientation" value="landscape" /><preference name="Fullscreen" value="true" /><preference name="android-minSdkVersion" value="24" /></widget>#' hmi/config.xml
+          # ፕሮጀክቱን አሁን ባለንበት ዋና ማውጫ ላይ እንዲፈጥረው እናደርጋለን
+          cordova create . com.thermo.hmi "Thermoforming HMI" --force
+          
+          # በሪፖዚቶሪዎ ውስጥ ያለውን የ www ፎልደር እና index.html እንዳይጠፋ ወደ ቦታው መመለስ
+          git checkout HEAD -- www/
+          
+          # የስክሪን አቀማመጥ (Landscape) እና ሌሎች ውቅሮችን በ config.xml ላይ መጨመር
+          sed -i 's#</widget>#<preference name="Orientation" value="landscape" /><preference name="Fullscreen" value="true" /><preference name="android-minSdkVersion" value="24" /></widget>#' config.xml
 
       - name: Build debug APK
-        working-directory: hmi
         run: |
           cordova platform add android@13
           cordova plugin add cordovarduino
@@ -46,4 +45,4 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: thermoforming-hmi-apk
-          path: hmi/platforms/android/app/build/outputs/apk/debug/app-debug.apk
+          path: platforms/android/app/build/outputs/apk/debug/app-debug.apk
