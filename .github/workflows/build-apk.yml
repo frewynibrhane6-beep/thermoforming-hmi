@@ -25,7 +25,7 @@ jobs:
       - name: Build Cordova APK
         run: |
           npm install -g cordova
-          cordova telemetry off
+          # ስህተት የፈጠረውን telemetry ትዕዛዝ ሙሉ በሙሉ አስወግደነዋል
           cordova create app com.thermo.hmi "Thermoforming HMI"
           cd app
           cp ../index.html www/index.html
