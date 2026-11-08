@@ -7,43 +7,44 @@ on:
 
 jobs:
   build:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     steps:
       - uses: actions/checkout@v4
 
       - uses: actions/setup-java@v4
         with:
-          distribution: temurin
-          java-version: "17"
+          distribution: zulu
+          java-version: "11"
 
       - uses: actions/setup-node@v4
         with:
-          node-version: "20"
+          node-version: "16"
 
-      - name: Install Cordova
-        run: npm install -g cordova@11
+      - name: Install Cordova and Tools
+        run: |
+          npm install -g cordova@9.0.0
+          npm install -g cordova-res
 
-      - name: Setup Cordova and Inject Code
+      - name: Setup Cordova Project
         run: |
           cordova telemetry off
-          
-          # 1. ጊዜያዊ ፎልደር ውስጥ አዲስ የኮርዶቫ ፕሮጀክት መፍጠር
+          # ጊዜያዊ ንፁህ ፎልደር መፍጠር
           cordova create tmp_project com.thermo.hmi "Thermoforming HMI"
           
-          # 2. የራስዎን የ www ፎልደር እና index.html ፋይል ወደ አዲሱ ፕሮጀክት መቅዳት
+          # የራስዎን የ www ይዘት መቅዳት
           if [ -d "www" ]; then
             cp -r www/* tmp_project/www/
           elif [ -f "index.html" ]; then
             cp index.html tmp_project/www/index.html
           fi
           
-          # 3. የስክሪን አቀማመጥ (Landscape) እና ሙሉ ስክሪን ውቅሮችን በ config.xml ላይ መጨመር
-          sed -i 's#</widget>#<preference name="Orientation" value="landscape" /><preference name="Fullscreen" value="true" /><preference name="android-minSdkVersion" value="24" /></widget>#' tmp_project/config.xml
+          # Landscape እና Fullscreen ውቅሮችን መጨመር
+          sed -i 's#</widget>#<preference name="Orientation" value="landscape" /><preference name="Fullscreen" value="true" /><preference name="android-minSdkVersion" value="22" /></widget>#' tmp_project/config.xml
 
       - name: Build debug APK
         working-directory: tmp_project
         run: |
-          cordova platform add android@10.1.2
+          cordova platform add android@9.1.0
           cordova plugin add cordovarduino
           cordova build android --debug
 
