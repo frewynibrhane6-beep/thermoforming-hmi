@@ -23,24 +23,32 @@ jobs:
       - name: Install Cordova
         run: npm install -g cordova@12
 
-      - name: Setup and Build Android Platform
+      - name: Setup Cordova and Inject Code
         run: |
           cordova telemetry off
           
-          # አዲስ ፕሮጀክት ከመፍጠር ይልቅ የኮርዶቫን ማዋቀሪያ ፋይል (config.xml) እራሳችን እንፈጥራለን
-          if [ ! -f config.xml ]; then
-            echo '<?xml version="1.0" encoding="UTF-8"?><widget id="com.thermo.hmi" version="1.0.0" xmlns="http://apache.org" xmlns:cdv="http://apache.org"><name>Thermoforming HMI</name><description>Thermoforming HMI Application</description><author email="dev@thermo.com" href="http://thermo.com">Developer</author><content src="index.html" /><access origin="*" /><allow-intent href="http://*/*" /><allow-intent href="https://*/*" /><preference name="Orientation" value="landscape" /><preference name="Fullscreen" value="true" /><preference name="android-minSdkVersion" value="24" /></widget>' > config.xml
+          # 1. ጊዜያዊ ፎልደር ውስጥ አዲስ የኮርዶቫ ፕሮጀክት መፍጠር
+          cordova create tmp_project com.thermo.hmi "Thermoforming HMI"
+          
+          # 2. የራስዎን የ www ፎልደር እና index.html ፋይል ወደ አዲሱ ፕሮጀክት መቅዳት
+          if [ -d "www" ]; then
+            cp -r www/* tmp_project/www/
+          elif [ -f "index.html" ]; then
+            cp index.html tmp_project/www/index.html
           fi
           
-          # የ Android ፕላትፎርም እና መገናኛ ፕለጊን መጫን
+          # 3. የስክሪን አቀማመጥ (Landscape) እና ሙሉ ስክሪን ውቅሮችን በ config.xml ላይ መጨመር
+          sed -i 's#</widget>#<preference name="Orientation" value="landscape" /><preference name="Fullscreen" value="true" /><preference name="android-minSdkVersion" value="24" /></widget>#' tmp_project/config.xml
+
+      - name: Build debug APK
+        working-directory: tmp_project
+        run: |
           cordova platform add android@13
           cordova plugin add cordovarduino
-          
-          # APK ፋይሉን መስራት
           cordova build android --debug
 
       - name: Save APK
         uses: actions/upload-artifact@v4
         with:
           name: thermoforming-hmi-apk
-          path: platforms/android/app/build/outputs/apk/debug/app-debug.apk
+          path: tmp_project/platforms/android/app/build/outputs/apk/debug/app-debug.apk
