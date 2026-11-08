@@ -11,7 +11,7 @@ jobs:
     - name: Setup Node.js
       uses: actions/setup-node@v4
       with:
-        node-version: 20
+        node-version: 18
     - name: Setup Java
       uses: actions/setup-java@v4
       with:
@@ -19,11 +19,17 @@ jobs:
         java-version: 17
     - name: Build Cordova APK
       run: |
-        npm install -g cordova
+        # ስሪቱን ወደ 12.0.0 በመቆለፍ ማውረዱን እናፈጥነዋለን
+        npm install -g cordova@12.0.0
         cordova create app com.thermo.hmi2 "Thermoforming HMI v2"
         cd app
         cp ../index.html www/index.html
-        cp ../logo.png www/logo.png
+        
+        # ፎቶው ከሌለ ግንባታው እንዳይቋረጥ የማረጋገጫ ህግ እንጨምራለን
+        if [ -f "../logo.png" ]; then
+          cp ../logo.png www/logo.png
+        fi
+        
         sed -i 's#</widget>#<preference name="Orientation" value="landscape" /><preference name="Fullscreen" value="true" /><preference name="android-minSdkVersion" value="24" /></widget>#' config.xml
         cordova platform add android@13
         cordova plugin add cordovarduino
