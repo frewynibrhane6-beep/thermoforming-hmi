@@ -23,22 +23,20 @@ jobs:
       - name: Install Cordova
         run: npm install -g cordova@12
 
-      - name: Setup Cordova Project
+      - name: Setup and Build Android Platform
         run: |
           cordova telemetry off
-          # ፕሮጀክቱን አሁን ባለንበት ዋና ማውጫ ላይ እንዲፈጥረው እናደርጋለን
-          cordova create . com.thermo.hmi "Thermoforming HMI" --force
           
-          # በሪፖዚቶሪዎ ውስጥ ያለውን የ www ፎልደር እና index.html እንዳይጠፋ ወደ ቦታው መመለስ
-          git checkout HEAD -- www/
+          # አዲስ ፕሮጀክት ከመፍጠር ይልቅ የኮርዶቫን ማዋቀሪያ ፋይል (config.xml) እራሳችን እንፈጥራለን
+          if [ ! -f config.xml ]; then
+            echo '<?xml version="1.0" encoding="UTF-8"?><widget id="com.thermo.hmi" version="1.0.0" xmlns="http://apache.org" xmlns:cdv="http://apache.org"><name>Thermoforming HMI</name><description>Thermoforming HMI Application</description><author email="dev@thermo.com" href="http://thermo.com">Developer</author><content src="index.html" /><access origin="*" /><allow-intent href="http://*/*" /><allow-intent href="https://*/*" /><preference name="Orientation" value="landscape" /><preference name="Fullscreen" value="true" /><preference name="android-minSdkVersion" value="24" /></widget>' > config.xml
+          fi
           
-          # የስክሪን አቀማመጥ (Landscape) እና ሌሎች ውቅሮችን በ config.xml ላይ መጨመር
-          sed -i 's#</widget>#<preference name="Orientation" value="landscape" /><preference name="Fullscreen" value="true" /><preference name="android-minSdkVersion" value="24" /></widget>#' config.xml
-
-      - name: Build debug APK
-        run: |
+          # የ Android ፕላትፎርም እና መገናኛ ፕለጊን መጫን
           cordova platform add android@13
           cordova plugin add cordovarduino
+          
+          # APK ፋይሉን መስራት
           cordova build android --debug
 
       - name: Save APK
