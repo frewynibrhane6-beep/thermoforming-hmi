@@ -1,253 +1,234 @@
 <!DOCTYPE html>
-<html lang="en"><head><meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Thermoforming HMI</title>
-<link href="https://fonts.googleapis.com/css2?family=Barlow+Semi+Condensed:wght@500;600;700&display=swap" rel="stylesheet">
-<style>
-:root{--bg:#DDE3E9;--panel:#F7F9FB;--p2:#E8EEF3;--ink:#14212D;--mute:#5B6B7A;--line:#C5CED7;--go:#0E8A6B;--heat:#E4572E;--warn:#C62828;--info:#2C6FB7;--vio:#7B4FD6;--cy:#0E91A6;--fan:#C98A00;--on:#fff;color-scheme:light}
-@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0C1522;--panel:#152234;--p2:#1D2E45;--ink:#E8EEF5;--mute:#8FA1B4;--line:#2B3C52;--go:#2FD0A0;--heat:#FF7A4D;--warn:#FF5C5C;--info:#5BA8FF;--vio:#A98BFF;--cy:#3CC8DB;--fan:#FFC247;--on:#0C1522;color-scheme:dark}}
-*{box-sizing:border-box}
-html,body{margin:0;height:100%;overflow:hidden;background:var(--bg);color:var(--ink);font-family:"Barlow Semi Condensed",system-ui,sans-serif;font-weight:500}
-.stage{position:fixed;left:50%;top:50%;width:960px;height:540px;padding:12px;display:grid;grid-template-rows:58px 1fr 92px;gap:10px;transform-origin:center}
-.card{background:var(--panel);border-radius:14px;border:1px solid var(--line)}
-.hd{display:flex;align-items:center;gap:12px;padding:0 14px}
-.logo{width:36px;height:36px;border-radius:10px;background:linear-gradient(135deg,var(--heat),var(--warn));color:#fff;display:grid;place-items:center;font-weight:700;font-size:20px}
-.hd h1{margin:0;font-size:18px;font-weight:700;line-height:1}
-.hd small{display:block;font-size:12px;color:var(--mute);font-weight:500;margin-top:3px}
-.sp{flex:1}
-.chip{font-size:13px;white-space:nowrap;color:var(--mute);padding:4px 10px;border-radius:99px;background:var(--p2)}
-.chip b{color:var(--go)}
-.pill{font-size:19px;font-weight:700;color:#fff;background:var(--info);padding:6px 18px;border-radius:99px}
-.pill.run{background:var(--go)}.pill.fault{background:var(--warn);animation:bl 1s steps(2) infinite}
-@keyframes bl{50%{opacity:.5}}
-.main{display:grid;grid-template-columns:1.55fr 1fr;gap:10px;min-height:0}
-.mach{display:flex;flex-direction:column;padding:10px;min-height:0}
-.mach svg{flex:1;min-height:0;width:100%}
-.tiles{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin-top:6px}
-.tiles div{background:var(--p2);border-left:5px solid var(--c);border-radius:10px;padding:5px 10px;font-size:12px;color:var(--mute);transition:background .4s,color .4s}
-.tiles div.on{background:var(--c);color:var(--on)}.tiles div.on b{color:var(--on)}
-.tiles b{display:block;font-size:17px;color:var(--ink)}
-.side{position:relative;padding:12px 14px;display:flex;flex-direction:column;min-height:0}
-.k{font-size:12px;color:var(--mute);font-weight:600}
-#cur{font-size:28px;font-weight:700;line-height:1.15;margin:0 0 5px}
-.prog{height:8px;border-radius:99px;background:var(--p2);overflow:hidden}
-.prog i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--go),var(--heat));transition:width .6s}
-.steps{list-style:none;margin:8px 0 6px;padding:0;display:grid;gap:2px}
-.steps li{display:flex;align-items:center;gap:9px;font-size:14px;height:17px;color:var(--mute)}
-.steps li i{width:15px;height:15px;border-radius:50%;border:2px solid var(--line);font-style:normal;font-size:11px;line-height:13px;text-align:center;color:#fff;flex:none}
-.steps li.d{color:var(--ink)}.steps li.d i{background:var(--go);border-color:var(--go)}
-.steps li.c{color:var(--heat);font-weight:700}.steps li.c i{border-color:var(--heat);background:var(--heat)}
-.io{display:grid;grid-template-columns:repeat(3,1fr);gap:4px;margin-top:5px}
-.io span{font-size:10.5px;text-align:center;padding:3px 0;border-radius:6px;background:var(--p2);color:var(--mute)}
-.io span.on{background:var(--go);color:#fff;font-weight:700}
-.io span.hot.on{background:var(--heat)}
-.alarm{display:none;position:absolute;left:14px;right:14px;bottom:12px;background:var(--warn);color:#fff;border-radius:8px;padding:6px 10px;font-size:14px;font-weight:700}
-.alarm.show{display:block}
-.bar{display:grid;grid-template-columns:2fr 1fr 1fr 1.1fr 1.3fr;gap:10px}
-button{font:inherit;font-weight:700;font-size:26px;border:0;border-radius:16px;color:#fff;cursor:pointer;box-shadow:inset 0 -5px 0 rgba(0,0,0,.2)}
-button:active{transform:translateY(2px)}
-button:focus-visible{outline:3px solid var(--info);outline-offset:2px}
-button:disabled{opacity:.35;cursor:not-allowed}
-#go{background:var(--go)}#stop{background:var(--info)}#estop{background:var(--warn);border-radius:46px;border:5px solid #FFD54A}#off{background:var(--ink);color:var(--panel);font-size:20px}
-.ov{position:absolute;inset:0;background:rgba(0,0,0,.55);display:none;place-items:center;border-radius:0;z-index:5}
-.ov.show{display:grid}
-.dlg{background:var(--panel);border-radius:16px;padding:22px;width:380px}
-.dlg h2{margin:0 0 6px;font-size:24px}.dlg p{margin:0;color:var(--mute);font-size:16px}
-.dlg div{display:flex;gap:10px;margin-top:16px}.dlg button{flex:1;height:56px;font-size:20px}
-.mv{transition:transform .7s ease}
-.hd{gap:8px}.chip{padding:4px 8px}.hd h1{font-size:16px}
-.tiles{grid-template-columns:repeat(6,1fr);gap:6px}.tiles div{padding:5px 8px}.tiles b{font-size:15px}
-.steps li{height:15px;font-size:13px}.steps{gap:1px;margin:6px 0 5px}.steps li i{width:13px;height:13px;font-size:9px;line-height:9px}
-#cur{font-size:26px}.io{gap:3px}.io span{font-size:10px;padding:2px 0}
-#fan.fo .spin{animation-play-state:running;animation-duration:.25s}
-.wind{stroke-dasharray:6 8;animation:fl .4s linear infinite}
-#set{background:var(--p2);color:var(--ink);font-size:20px;border:1px solid var(--line)}
-.dlg2{background:var(--panel);border-radius:16px;padding:22px;width:500px}
-.dlg2 h2{margin:0 0 4px;font-size:24px}
-.dlg2 .row{display:flex;align-items:center;justify-content:space-between;margin-top:16px;font-size:20px;font-weight:700}
-.dlg2 small{display:block;font-size:13px;color:var(--mute);font-weight:500}
-.stp{display:flex;align-items:center;gap:8px}
-.stp button{width:56px;height:56px;font-size:32px;line-height:1;background:var(--info);border-radius:14px}
-.stp output{min-width:150px;text-align:center;font-size:30px;font-weight:700;color:var(--heat)}
-.acts{display:flex;gap:10px;margin-top:20px}.acts button{flex:1;height:56px;font-size:20px}
-.spin{transform-box:fill-box;transform-origin:center;animation:sp 1s linear infinite;animation-play-state:paused}
-@keyframes sp{to{transform:rotate(360deg)}}
-.flow{opacity:0;stroke-dasharray:5 11;animation:fl .5s linear infinite}
-@keyframes fl{to{stroke-dashoffset:-16}}
-#rolls.mo .spin{animation-play-state:running}#rolls.mo .flow{opacity:.9}
-</style></head><body>
-<div class="stage" id="stage">
- <div class="card hd">
-  <div class="logo">G</div>
-  <div><h1>GEAR ELECTROMECHANICAL ENGINEERING</h1><small>Thermoforming machine control</small></div>
-  <div class="sp"></div>
-  <span class="chip"><b>●</b> USB</span><span class="chip" id="ct" style="cursor:pointer">Temp <b id="tt">25</b> / <b id="ts">180</b> °C</span><span class="chip" id="cv" style="cursor:pointer">Vacuum <b id="tvt">10 s</b> · Fan <b id="tfn">30 s</b></span><span class="chip" id="cnt">Cycles 0</span><span class="pill" id="pill">READY</span>
- </div>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="initial-scale=1, width=device-width, viewport-fit=cover">
+    <title>Thermoforming HMI</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #1e1e24;
+            color: #ffffff;
+            margin: 0;
+            padding: 15px;
+            user-select: none;
+        }
+        .header {
+            text-align: center;
+            background-color: #2e2e38;
+            padding: 10px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+        }
+        .container {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 15px;
+        }
+        .panel {
+            background-color: #2a2a35;
+            padding: 15px;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.2);
+        }
+        h2 {
+            margin-top: 0;
+            color: #4caf50;
+            border-bottom: 2px solid #3e3e4f;
+            padding-bottom: 5px;
+            font-size: 18px;
+        }
+        .btn {
+            background-color: #4caf50;
+            color: white;
+            padding: 10px;
+            border: none;
+            border-radius: 4px;
+            font-size: 15px;
+            cursor: pointer;
+            width: 100%;
+            margin-bottom: 8px;
+            text-align: center;
+        }
+        .btn:active { background-color: #45a049; }
+        .btn-danger { background-color: #f44336; }
+        .btn-danger:active { background-color: #da190b; }
+        .btn-save { background-color: #008cba; }
+        .btn-save:active { background-color: #007bb6; }
+        
+        .setting-group {
+            margin-bottom: 10px;
+        }
+        label {
+            display: block;
+            font-size: 13px;
+            margin-bottom: 4px;
+            color: #bbb;
+        }
+        input {
+            width: 100%;
+            padding: 8px;
+            background-color: #15151c;
+            border: 1px solid #3e3e4f;
+            color: white;
+            border-radius: 4px;
+            box-sizing: border-box;
+            font-size: 14px;
+        }
+        .status {
+            background-color: #15151c;
+            padding: 8px;
+            border-radius: 4px;
+            min-height: 40px;
+            font-family: monospace;
+            font-size: 13px;
+            white-space: pre-wrap;
+            border: 1px solid #3e3e4f;
+        }
+        .counter-box {
+            background-color: #1b4d3e;
+            color: #5af78e;
+            font-weight: bold;
+            text-align: center;
+            font-size: 18px;
+            padding: 10px;
+            margin-top: 10px;
+            border-radius: 4px;
+            border: 1px solid #4caf50;
+        }
+    </style>
+</head>
+<body>
 
- <div class="main">
-  <div class="card mach">
-   <svg viewBox="0 0 560 300" role="img" aria-label="Machine animation">
-    <defs>
-     <clipPath id="cp"><rect width="560" height="300"/></clipPath>
-     <linearGradient id="gl" x1="0" y1="0" x2="0" y2="1"><stop offset="0" style="stop-color:var(--heat);stop-opacity:.75"/><stop offset="1" style="stop-color:var(--heat);stop-opacity:0"/></linearGradient>
-     <linearGradient id="mg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" style="stop-color:var(--mute)"/><stop offset="1" style="stop-color:var(--line)"/></linearGradient>
-     <linearGradient id="pg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#9BE0FF"/><stop offset="1" stop-color="#2C6FB7"/></linearGradient>
-     <g id="part">
-      <path d="M212 130L226 150H240L252 172H268Q280 184 292 172H308L320 150H334L348 130Z" fill="#7CC4FF" opacity=".28"/>
-      <path d="M198 130H212L226 150H240L252 172H268Q280 184 292 172H308L320 150H334L348 130H362" fill="none" stroke="url(#pg)" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/>
-      <path d="M214 127L228 147H242L254 169H268Q280 180 292 169" fill="none" stroke="#fff" stroke-width="1.6" opacity=".65" stroke-linecap="round"/>
-     </g>
-    </defs>
-    <g clip-path="url(#cp)">
-     <rect x="50" y="80" width="16" height="182" rx="4" fill="var(--p2)" stroke="var(--line)"/><rect x="494" y="80" width="16" height="182" rx="4" fill="var(--p2)" stroke="var(--line)"/>
-     <g id="mold" class="mv" style="transform:translateY(72px)">
-      <path d="M190 132H212L226 150H240L252 172H268Q280 184 292 172H308L320 150H334L348 132H370V270H190Z" fill="url(#mg)"/>
-      <path d="M212 132L226 150H240L252 172H268Q280 184 292 172H308L320 150H334L348 132" fill="none" stroke="var(--ink)" stroke-width="1.5" opacity=".35"/>
-     </g>
-     <rect x="20" y="262" width="520" height="38" rx="6" fill="var(--line)"/>
-     <g font-size="12" font-weight="600" fill="var(--mute)" font-family="inherit" text-anchor="middle"><text x="280" y="285">MOLD</text><text x="496" y="285">VACUUM</text></g>
-     <path id="pipe" d="M370 240H470" stroke="var(--line)" stroke-width="6" style="transition:stroke .6s"/>
-     <rect id="pump" x="470" y="214" width="52" height="48" rx="8" fill="var(--line)" style="transition:fill .6s"/>
-     <path id="sheet" d="M110 130H450" stroke="var(--info)" stroke-width="7" fill="none" stroke-linecap="round" stroke-linejoin="round" style="transition:opacity .4s,stroke 1.6s"/>
-     <g id="rolls">
-      <path d="M50 130H110M450 130H516" stroke="var(--info)" stroke-width="7" stroke-linecap="round"/>
-      <path class="flow" d="M50 130H110M450 130H516" stroke="#fff" stroke-width="2" fill="none"/>
-      <circle cx="30" cy="130" r="22" fill="var(--info)" fill-opacity=".35" stroke="var(--ink)" stroke-width="3"/>
-      <g class="spin"><circle cx="30" cy="130" r="9" fill="var(--panel)" stroke="var(--ink)" stroke-width="2"/><path d="M30 121V139M21 130H39" stroke="var(--ink)" stroke-width="2"/></g>
-      <circle cx="528" cy="130" r="14" fill="var(--panel)" stroke="var(--ink)" stroke-width="3"/>
-      <g class="spin"><path d="M528 119V141M517 130H539" stroke="var(--ink)" stroke-width="2.5"/></g>
-      <rect id="mot" x="514" y="152" width="28" height="18" rx="4" fill="var(--line)" style="transition:fill .4s"/>
-     </g>
-     <g id="ej" class="mv" style="opacity:0;transition:transform .9s ease,opacity .4s"><use href="#part"/></g>
-     <g id="fan" class="mv" style="transform:translateY(-110px)">
-      <rect x="236" y="22" width="88" height="62" rx="12" fill="var(--panel)" stroke="var(--ink)" stroke-width="3"/>
-      <g class="spin"><ellipse cx="280" cy="41" rx="6" ry="12" fill="var(--fan)"/><ellipse cx="280" cy="65" rx="6" ry="12" fill="var(--fan)"/><ellipse cx="261" cy="53" rx="12" ry="6" fill="var(--fan)"/><ellipse cx="299" cy="53" rx="12" ry="6" fill="var(--fan)"/></g>
-      <circle cx="280" cy="53" r="5" fill="var(--ink)"/>
-      <path class="wind" d="M252 92V124M280 92V126M308 92V124" stroke="var(--fan)" stroke-width="3" stroke-linecap="round" fill="none"/>
-     </g>
-     <g id="c1" class="mv"><rect x="96" y="106" width="36" height="24" rx="5" fill="var(--ink)"/></g>
-     <g id="c2" class="mv"><rect x="428" y="106" width="36" height="24" rx="5" fill="var(--ink)"/></g>
-     <g id="heater" class="mv" style="transform:translateX(340px)">
-      <rect id="gw" x="150" y="98" width="260" height="32" fill="url(#gl)" opacity="0" style="transition:opacity .6s"/>
-      <rect id="hb" x="140" y="68" width="280" height="30" rx="7" fill="var(--mute)" style="transition:fill .6s"/>
-      <path d="M156 83h248" stroke="var(--panel)" stroke-width="2.5" stroke-dasharray="12 7" opacity=".8"/>
-     </g>
-     <g id="sp" fill="#FFD54A" style="opacity:0;transition:opacity .4s">
-      <path transform="translate(190 70)" d="M0-9L2-2L9 0L2 2L0 9L-2 2L-9 0L-2-2Z"/>
-      <path transform="translate(374 82)" d="M0-7L2-2L7 0L2 2L0 7L-2 2L-7 0L-2-2Z"/>
-      <path transform="translate(285 38)" d="M0-10L2-2L10 0L2 2L0 10L-2 2L-10 0L-2-2Z"/>
-     </g>
-     <g id="shown" style="opacity:0;transition:opacity .5s">
-      <text x="22" y="24" font-size="11" font-weight="600" fill="var(--mute)" font-family="inherit">LAST PART <tspan id="pc">#0</tspan></text>
-      <rect x="22" y="92" width="112" height="6" rx="3" fill="var(--line)"/>
-      <use href="#part" transform="translate(-118 -41) scale(.7)"/>
-     </g>
-    </g>
-   </svg>
-   <div class="tiles">
-    <div style="--c:var(--info)">Clamp<b id="tc">OPEN</b></div><div style="--c:var(--heat)">Heater<b id="th">OUT</b></div><div style="--c:var(--vio)">Mold<b id="tm">DOWN</b></div><div style="--c:var(--cy)">Vacuum<b id="tv">OFF</b></div><div style="--c:var(--fan)">Fan<b id="tfa">OFF</b></div><div style="--c:var(--go)">Motor<b id="tf">OFF</b></div>
-   </div>
-  </div>
+    <div class="header">
+        <h1 style="margin:0; font-size:22px;">Thermoforming Machine HMI Panel</h1>
+    </div>
 
-  <div class="card side">
-   <div class="k">CURRENT STEP</div>
-   <div id="cur">Ready</div>
-   <div class="prog"><i id="pg"></i></div>
-   <ul class="steps" id="st"></ul>
-   <div class="k">OUTPUTS</div>
-   <div class="io" id="io"></div>
-   <div class="alarm" id="al">FAULT: emergency stop. Press STOP to reset.</div>
-  </div>
- </div>
+    <div class="container">
+        <!-- 1ኛ ክፍል: ግንኙነት እና ዋና መቆጣጠሪያ -->
+        <div class="panel">
+            <h2>Controls</h2>
+            <button class="btn" id="connectBtn">Connect USB</button>
+            <button class="btn btn-danger" id="disconnectBtn">Disconnect</button>
+            <button class="btn" style="background-color:#ff9800;" id="startBtn">Start Cycle</button>
+            <button class="btn btn-danger" id="stopBtn">EMERGENCY STOP</button>
+            <div class="status" id="connectionStatus">Status: Disconnected</div>
+            <div class="counter-box" id="counterDisplay">Produced: 0 / ---</div>
+        </div>
 
- <div class="bar">
-  <button id="go">START CYCLE</button><button id="stop">STOP</button><button id="estop">E-STOP</button><button id="set">SETTINGS</button><button id="off">SHUT DOWN HMI</button>
- </div>
+        <!-- 2ኛ ክፍል: የጊዜ እና የምርት ብዛት ማዘዣ (Settings) -->
+        <div class="panel">
+            <h2>Production Settings</h2>
+            <div class="setting-group">
+                <label>Target Pieces (የምርት ብዛት ገደብ)፦</label>
+                <input type="number" id="targetPiecesInput" value="1000">
+            </div>
+            <div class="setting-group">
+                <label>Heater Time (ሰከንድ)፦</label>
+                <input type="number" id="heatTimeInput" value="3">
+            </div>
+            <div class="setting-group">
+                <label>Hydraulic Time (ሰከንድ)፦</label>
+                <input type="number" id="hydroTimeInput" value="2">
+            </div>
+            <button class="btn btn-save" id="saveTimeBtn">Update Settings</button>
+            <div class="status" id="timeStatus">Settings: Ready</div>
+        </div>
 
- <div class="ov" id="ov2"><div class="dlg2"><h2>Machine settings</h2>
-  <div class="row"><span>Heating temperature<small>Setpoint for the temperature controller</small></span><div class="stp"><button data-k="t" data-d="-5" aria-label="Lower temperature">−</button><output id="o_t">180 °C</output><button data-k="t" data-d="5" aria-label="Raise temperature">+</button></div></div>
-  <div class="row"><span>Vacuum pumping time<small>From 1 second to 10 minutes. Hold + or − to go faster.</small></span><div class="stp"><button data-k="v" data-d="-1" aria-label="Shorter vacuum time">−</button><output id="o_v">10 s</output><button data-k="v" data-d="1" aria-label="Longer vacuum time">+</button></div></div>
-  <div class="row"><span>Cooling fan time<small>Fan runs after forming to cool the part</small></span><div class="stp"><button data-k="f" data-d="-1" aria-label="Shorter fan time">−</button><output id="o_f">30 s</output><button data-k="f" data-d="1" aria-label="Longer fan time">+</button></div></div>
-  <div class="row"><span>Motor working time<small>How long the motor pulls the material</small></span><div class="stp"><button data-k="m" data-d="-1" aria-label="Shorter motor time">−</button><output id="o_m">10 s</output><button data-k="m" data-d="1" aria-label="Longer motor time">+</button></div></div>
-  <div class="acts"><button id="cancel2" style="background:var(--mute)">Cancel</button><button id="save2" style="background:var(--go)">Save settings</button></div></div></div>
- <div class="ov" id="ov"><div class="dlg"><h2>Shut down the HMI?</h2><p>The HMI closes first, then the tablet powers off. The machine is stopped. This sends SHUTDOWN_CONFIRM to the controller.</p>
-  <div><button id="no" style="background:var(--mute)">Cancel</button><button id="yes" style="background:var(--warn)">Shut down</button></div></div></div>
-</div>
+        <!-- 3ኛ ክፍል: የፒን ማዘዣ (Pin Settings) -->
+        <div class="panel">
+            <h2>Pin Settings (Arduino)</h2>
+            <div class="setting-group">
+                <label>Heater Relay Pin #:</label>
+                <input type="number" id="heatPinInput" value="13">
+            </div>
+            <div class="setting-group">
+                <label>Hydraulic Relay Pin #:</label>
+                <input type="number" id="hydroPinInput" value="12">
+            </div>
+            <button class="btn btn-save" id="savePinBtn">Update Pins</button>
+            <div class="status" id="operationLog">Log: Ready</div>
+        </div>
+    </div>
 
-<script>
-var $=function(i){return document.getElementById(i)};
-function fit(){var w=innerWidth,h=innerHeight,p=h>w,s=p?Math.min(h/960,w/540):Math.min(w/960,h/540);$("stage").style.transform="translate(-50%,-50%) rotate("+(p?90:0)+"deg) scale("+s+")"}
-addEventListener("resize",fit);fit();
-var S=[["Clamp sheet",900],["Heater in",900],["Heating + soak",2300],["Heater out",900],["Mold up",1000],["Vacuum forming",1900],["Cooling fan",1800],["Mold down",1000],["Release part",1600],["Pull material",1800]];
-var O={CLAMP_SOL:[0],HEATER_MOVE_IN:[1],HEATER_MOVE_OUT:[3],MOLD_DOWN_SOL:[4],MOLD_UP_SOL:[7],VACUUM_PUMP:[5],VACUUM_SOL:[5],FAN_RELAY:[6],RELEASE_SOL:[8],MOTOR_RELAY:[9]};
-$("st").innerHTML=S.map(function(s,i){return '<li id="s'+i+'"><i></i>'+s[0]+'</li>'}).join("");
-$("io").innerHTML=Object.keys(O).map(function(n){return '<span id="o'+n+'"'+(n=="HEATER_MOVE_IN"?' class="hot"':'')+'>'+n+'</span>'}).join("");
-var idx=-1,fault=false,stopped=true,wantOff=false,tm=null,cycles=0;
-var isApp=/^(file:|https?:\/\/localhost)/.test(location.href),live=false,rx="";
-if(isApp){var cj=document.createElement("script");cj.src="cordova.js";document.head.appendChild(cj)}
-function send(c){if(live&&window.serial)serial.write(c+"\n",function(){},function(){})}
-var MI={2:9,3:0,4:1,5:2,6:3,7:4,8:4,9:5,10:5,11:6,12:7,13:7,14:8};
-function onLine(t){
- if(t.indexOf("ST=")==0){var n=+t.slice(3),was=idx;fault=n==16;idx=(fault||MI[n]===undefined)?-1:MI[n];stopped=idx<0;if(was>=0&&idx<0&&!fault)cycles++;render()}
- else if(t.indexOf("FEED=")==0){t.split(",").forEach(function(p){var q=p.split("="),v=Math.round(+q[1]/1000);if(q[0]=="FEED")M=v;if(q[0]=="FORM")V=v;if(q[0]=="COOL")Fn=v});chips2()}
-}
-function link(){
- if(!window.serial)return;
- var retry=function(){live=false;render();setTimeout(link,3000)};
- serial.requestPermission(function(){serial.open({baudRate:115200,dtr:true},function(){
-  live=true;clearTimeout(tm);idx=-1;fault=false;stopped=true;render();
-  serial.registerReadCallback(function(d){rx+=String.fromCharCode.apply(null,new Uint8Array(d));var i;while((i=rx.indexOf("\n"))>=0){onLine(rx.slice(0,i).trim());rx=rx.slice(i+1)}},function(){});
-  setTimeout(function(){send("GET")},2000);
- },retry)},retry);
-}
-document.addEventListener("deviceready",link,false);
-function render(){
- var i=idx;
- for(var n in O)$("o"+n).classList.toggle("on",O[n].indexOf(i)>-1);
- S.forEach(function(s,k){var e=$("s"+k);e.className=k<i?"d":k==i?"c":"";e.firstChild.textContent=k<i?"✓":""});
- var cl=i>=0&&i<=7;
- var t=cl?"translateY(0)":"translateY(-28px)";$("c1").style.transform=t;$("c2").style.transform=t;
- var hin=i==1||i==2;
- $("heater").style.transform=hin?"translateX(0)":"translateX(340px)";
- $("hb").style.fill=i==2?"var(--heat)":"var(--mute)";$("gw").style.opacity=i==2?1:0;
- var mu=i>=4&&i<=6;$("mold").style.transform=mu?"translateY(0)":"translateY(72px)";
- var f=i>=5&&i<=7;
- $("sheet").setAttribute("d",f?"M110 130H212L226 150H240L252 172H268Q280 184 292 172H308L320 150H334L348 130H450":(i>=2&&i<=4)?"M110 130Q280 146 450 130":"M110 130H450");
- $("sheet").style.opacity=i==8?0:1;$("sheet").style.stroke=(i>=2&&i<=5)?"var(--heat)":"var(--info)";
- $("ej").style.opacity=i==8?1:0;$("ej").style.transform=i==8?"translateY(-72px)":"none";
- $("sp").style.opacity=i==8?1:0;
- $("shown").style.opacity=(cycles>0||i==9)&&i!=8?1:0;$("pc").textContent="#"+(cycles+(i==9?1:0));
- $("pump").style.fill=i==5?"var(--go)":"var(--line)";$("pipe").style.stroke=i==5?"var(--go)":"var(--line)";
- $("tc").textContent=cl?"CLOSED":"OPEN";$("th").textContent=hin?"IN":"OUT";$("tm").textContent=mu?"UP":"DOWN";[["tc",cl],["th",hin],["tm",mu],["tv",i==5],["tfa",i==6],["tf",i==9]].forEach(function(x){$(x[0]).parentNode.classList.toggle("on",x[1])});$("tv").textContent=i==5?"ON":"OFF";$("tf").textContent=i==9?"PULLING":"OFF";$("rolls").classList.toggle("mo",i==9);$("mot").style.fill=i==9?"var(--go)":"var(--line)";$("tfa").textContent=i==6?"ON":"OFF";$("fan").style.transform=i==6?"translateY(0)":"translateY(-110px)";$("fan").classList.toggle("fo",i==6);
- $("cur").textContent=fault?"Fault":i<0?(isApp&&!live?"No USB link":"Ready"):S[i][0];
- $("cur").style.color=fault?"var(--warn)":i>=0?"var(--heat)":"var(--info)";
- $("pg").style.width=(i<0?0:(i+1)/S.length*100)+"%";
- var p=$("pill");p.className="pill "+(fault?"fault":i>=0?"run":"");p.textContent=fault?"FAULT":i>=0?"RUNNING":"READY";
- $("cnt").textContent="Cycles "+cycles;$("al").classList.toggle("show",fault);
- $("go").disabled=!(i<0&&!fault);$("set").disabled=i>=0;$("off").disabled=!(stopped&&wantOff);
-}
-function step(i){idx=i;render();tm=setTimeout(function(){if(i+1<S.length)step(i+1);else{cycles++;idx=-1;stopped=true;wantOff=false;render()}},i==5?Math.min(V*190,4000):i==6?Math.min(Fn*190,3000):i==9?Math.min(M*190,4000):S[i][1])}
-$("go").onclick=function(){if(live){send("START");return}if(fault||idx>=0)return;stopped=false;wantOff=false;step(0)};
-$("stop").onclick=function(){if(live){send("STOP");return}clearTimeout(tm);fault=false;idx=-1;stopped=true;wantOff=true;render()};
-$("estop").onclick=function(){if(live){send("STOP");return}clearTimeout(tm);fault=true;idx=-1;stopped=true;wantOff=true;render()};
-$("off").onclick=function(){$("ov").classList.add("show")};
-$("no").onclick=function(){$("ov").classList.remove("show")};
-$("yes").onclick=function(){$("ov").classList.remove("show");wantOff=false;render();$("cur").textContent="Shutting down HMI…";setTimeout(function(){$("cur").textContent="Shutting down tablet…"},1500)};
-var T=180,V=10,Fn=30,M=10,cur=25,tt=T,tv=V,tn=Fn,tmo=M;
-try{var a=localStorage.getItem("gt"),b=localStorage.getItem("gv"),c=localStorage.getItem("gf"),d=localStorage.getItem("gm");if(a)T=+a;if(b)V=+b;if(c)Fn=+c;if(d)M=+d}catch(e){}
-function fmt(v){return v<60?v+" s":Math.floor(v/60)+":"+("0"+v%60).slice(-2)+" min"}
-function chips2(){$("tt").textContent=Math.round(cur);$("ts").textContent=T;$("tvt").textContent=fmt(V);$("tfn").textContent=fmt(Fn);$("ct").style.color=cur>=T-3?"var(--heat)":""}
-function sh(){$("o_t").textContent=tt+" °C";$("o_v").textContent=fmt(tv);$("o_f").textContent=fmt(tn);$("o_m").textContent=fmt(tmo)}
-function open2(){if(idx>=0)return;tt=T;tv=V;tn=Fn;tmo=M;sh();$("ov2").classList.add("show")}
-function adj(b,m){var d=+b.dataset.d,k=b.dataset.k;if(k=="t")tt=Math.max(100,Math.min(300,tt+d));else{var st=m<12?1:m<30?5:10,x=Math.max(1,Math.min(600,(k=="v"?tv:k=="m"?tmo:tn)+(d<0?-st:st)));if(k=="v")tv=x;else if(k=="m")tmo=x;else tn=x}sh()}
-document.querySelectorAll(".stp button").forEach(function(b){var t0,h,n;function stop(){clearTimeout(t0);clearInterval(h)}
-b.onpointerdown=function(e){e.preventDefault();n=0;adj(b,0);stop();t0=setTimeout(function(){h=setInterval(function(){n++;adj(b,n)},110)},450)};
-["pointerup","pointerleave","pointercancel"].forEach(function(ev){b.addEventListener(ev,stop)});
-b.onkeydown=function(e){if(e.key=="Enter"||e.key==" "){e.preventDefault();adj(b,0)}}});
-$("set").onclick=open2;$("ct").onclick=open2;$("cv").onclick=open2;
-$("cancel2").onclick=function(){$("ov2").classList.remove("show")};
-$("save2").onclick=function(){T=tt;V=tv;Fn=tn;M=tmo;if(live){[["FORM",V],["COOL",Fn],["FEED",M]].forEach(function(x,k){setTimeout(function(){send("SET "+x[0]+" "+x[1]*1000)},k*250)})}try{localStorage.setItem("gt",T);localStorage.setItem("gv",V);localStorage.setItem("gf",Fn);localStorage.setItem("gm",M)}catch(e){}$("ov2").classList.remove("show");chips2()};
-setInterval(function(){var hot=idx>=1&&idx<=2;cur+=hot?(T-cur)*.25:(25-cur)*.01;chips2()},200);
-chips2();
-render();setTimeout(function(){if(!isApp&&idx<0&&!fault)$("go").click()},900);
-</script></body></html>
+    <script src="cordova.js"></script>
+    <script>
+        document.addEventListener('deviceready', onDeviceReady, false);
+
+        var currentTarget = 1000;
+
+        function onDeviceReady() {
+            document.getElementById('connectBtn').addEventListener('click', connectArduino);
+            document.getElementById('disconnectBtn').addEventListener('click', disconnectArduino);
+            document.getElementById('startBtn').addEventListener('click', startMachine);
+            document.getElementById('stopBtn').addEventListener('click', stopMachine);
+            document.getElementById('saveTimeBtn').addEventListener('click', sendProductionSettings);
+            document.getElementById('savePinBtn').addEventListener('click', sendPinSettings);
+        }
+
+        function log(message) { document.getElementById('operationLog').innerText = "Log: " + message; }
+        function updateStatus(status) { document.getElementById('connectionStatus').innerText = "Status: " + status; }
+
+        function connectArduino() {
+            updateStatus("Connecting...");
+            if (typeof serial === 'undefined') { updateStatus("No Serial Plugin"); return; }
+
+            serial.requestPermission(function() {
+                serial.open({ baudRate: 9600, dataBits: 8, stopBits: 1, parity: 0, dtr: true, rts: true }, 
+                function() {
+                    updateStatus("Connected");
+                    log("USB Connected.");
+                    
+                    serial.registerReadCallback(function(data) {
+                        var str = String.fromCharCode.apply(null, new Uint8Array(data));
+                        str = str.trim();
+                        
+                        if(str.startsWith("COUNT:")) {
+                            var currentCount = str.substring(6);
+                            document.getElementById('counterDisplay').innerText = "Produced: " + currentCount + " / " + currentTarget;
+                        } else {
+                            log("Arduino: " + str);
+                        }
+                    }, function() {});
+                }, function() { updateStatus("Open Failed"); });
+            }, function() { updateStatus("Permission Denied"); });
+        }
+
+        function disconnectArduino() {
+            if (typeof serial !== 'undefined') {
+                serial.close(function() { updateStatus("Disconnected"); }, function() {});
+            }
+        }
+
+        function startMachine() { sendSerial("START\n"); }
+        function stopMachine() { sendSerial("STOP\n"); }
+
+        function sendProductionSettings() {
+            var target = document.getElementById('targetPiecesInput').value;
+            var heatTime = document.getElementById('heatTimeInput').value;
+            var hydroTime = document.getElementById('hydroTimeInput').value;
+            currentTarget = target;
+            
+            sendSerial("SET_PROD:" + target + "," + heatTime + "," + hydroTime + "\n");
+            document.getElementById('counterDisplay').innerText = "Produced: 0 / " + target;
+            document.getElementById('timeStatus').innerText = "Sent: Target=" + target + ", H=" + heatTime + "s, Y=" + hydroTime + "s";
+        }
+
+        function sendPinSettings() {
+            var heatPin = document.getElementById('heatPinInput').value;
+            var hydroPin = document.getElementById('hydroPinInput').value;
+            sendSerial("SET_PIN:" + heatPin + "," + hydroPin + "\n");
+            log("Pins sent: H=" + heatPin + ", Y=" + hydroPin);
+        }
+
+        function sendSerial(command) {
+            if (typeof serial !== 'undefined') {
+                serial.write(command, function() {}, function() {});
+            } else {
+                log("USB not connected!");
+            }
+        }
+    </script>
+</body>
+</html>
