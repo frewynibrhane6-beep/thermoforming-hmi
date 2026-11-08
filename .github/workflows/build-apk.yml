@@ -1,198 +1,41 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="initial-scale=1, width=device-width, viewport-fit=cover">
-    <title>Thermoforming HMI</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            background-color: #1e1e24;
-            color: #ffffff;
-            margin: 0;
-            padding: 20px;
-            user-select: none;
-        }
-        .header {
-            text-align: center;
-            background-color: #2e2e38;
-            padding: 15px;
-            border-radius: 8px;
-            margin-bottom: 20px;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.3);
-        }
-        .container {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 20px;
-        }
-        .panel {
-            background-color: #2a2a35;
-            padding: 20px;
-            border-radius: 8px;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.2);
-        }
-        h2 {
-            margin-top: 0;
-            color: #4caf50;
-            border-bottom: 2px solid #3e3e4f;
-            padding-bottom: 10px;
-        }
-        .btn {
-            display: inline-block;
-            background-color: #4caf50;
-            color: white;
-            padding: 12px 24px;
-            border: none;
-            border-radius: 4px;
-            font-size: 16px;
-            cursor: pointer;
-            width: 100%;
-            margin-bottom: 10px;
-            box-sizing: border-box;
-            text-align: center;
-        }
-        .btn:active {
-            background-color: #45a049;
-        }
-        .btn-danger {
-            background-color: #f44336;
-        }
-        .btn-danger:active {
-            background-color: #da190b;
-        }
-        .status {
-            background-color: #15151c;
-            padding: 10px;
-            border-radius: 4px;
-            min-height: 50px;
-            font-family: monospace;
-            white-space: pre-wrap;
-            border: 1px solid #3e3e4f;
-        }
-    </style>
-</head>
-<body>
+name: Build APK
 
-    <div class="header">
-        <h1>Thermoforming Machine HMI Panel</h1>
-    </div>
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
 
-    <div class="container">
-        <div class="panel">
-            <h2>Connection Control</h2>
-            <button class="btn" id="connectBtn">Connect to Arduino</button>
-            <button class="btn btn-danger" id="disconnectBtn">Disconnect</button>
-            <div class="status" id="connectionStatus">Status: Disconnected</div>
-        </div>
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
 
-        <div class="panel">
-            <h2>Machine Operation</h2>
-            <button class="btn" id="startBtn">Start Cycle</button>
-            <button class="btn btn-danger" id="stopBtn">Emergency Stop</button>
-            <div class="status" id="operationLog">Log: Ready</div>
-        </div>
-    </div>
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
 
-    <script src="cordova.js"></script>
-    <script>
-        document.addEventListener('deviceready', onDeviceReady, false);
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
 
-        var serialDevice = null;
+      - name: Build Cordova APK
+        run: |
+          npm install -g cordova
+          cordova telemetry off
+          cordova create app com.thermo.hmi "Thermoforming HMI"
+          cd app
+          cp ../index.html www/index.html
+          sed -i 's#</widget>#<preference name="Orientation" value="landscape" /><preference name="Fullscreen" value="true" /><preference name="android-minSdkVersion" value="24" /></widget>#' config.xml
+          cordova platform add android@13
+          cordova plugin add cordovarduino
+          cordova build android --debug
 
-        function onDeviceReady() {
-            log("Cordova initialized. Ready for USB connection.");
-            
-            document.getElementById('connectBtn').addEventListener('click', connectArduino);
-            document.getElementById('disconnectBtn').addEventListener('click', disconnectArduino);
-            document.getElementById('startBtn').addEventListener('click', startMachine);
-            document.getElementById('stopBtn').addEventListener('click', stopMachine);
-        }
-
-        function log(message) {
-            var logDiv = document.getElementById('operationLog');
-            logDiv.innerText = "Log: " + message;
-        }
-
-        function updateStatus(status) {
-            document.getElementById('connectionStatus').innerText = "Status: " + status;
-        }
-
-        function connectArduino() {
-            updateStatus("Connecting...");
-            log("Requesting USB serial access...");
-            
-            if (typeof serial === 'undefined') {
-                updateStatus("Failed");
-                log("Error: Serial plugin not found.");
-                return;
-            }
-
-            serial.requestPermission(function(success) {
-                log("Permission granted. Opening port...");
-                serial.open({
-                    baudRate: 9600,
-                    dataBits: 8,
-                    stopBits: 1,
-                    parity: 0,
-                    dtr: true,
-                    rts: true
-                }, function(success) {
-                    updateStatus("Connected");
-                    log("Connected to Arduino via USB successfully.");
-                    
-                    serial.registerReadCallback(function(data) {
-                        var view = new Uint8Array(data);
-                        var str = String.fromCharCode.apply(null, view);
-                        log("Received from Arduino: " + str);
-                    }, function(error) {
-                        log("Read error: " + error);
-                    });
-                    
-                }, function(error) {
-                    updateStatus("Failed");
-                    log("Open port error: " + error);
-                });
-            }, function(error) {
-                updateStatus("Permission Denied");
-                log("USB Permission error: " + error);
-            });
-        }
-
-        function disconnectArduino() {
-            if (typeof serial !== 'undefined') {
-                serial.close(function(success) {
-                    updateStatus("Disconnected");
-                    log("Port closed safely.");
-                }, function(error) {
-                    log("Close error: " + error);
-                });
-            } else {
-                updateStatus("Disconnected");
-            }
-        }
-
-        function startMachine() {
-            sendSerial("START\n");
-            log("Sent command: START to Arduino");
-        }
-
-        function stopMachine() {
-            sendSerial("STOP\n");
-            log("Sent command: EMERGENCY STOP to Arduino");
-        }
-
-        function sendSerial(command) {
-            if (typeof serial !== 'undefined') {
-                serial.write(command, function(success) {
-                    // Success
-                }, function(error) {
-                    log("Write error: " + error);
-                });
-            } else {
-                log("Cannot write: Serial not connected.");
-            }
-        }
-    </script>
-</body>
-</html>
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: thermoforming-hmi-apk
+          path: app/platforms/android/app/build/outputs/apk/debug/app-debug.apk
