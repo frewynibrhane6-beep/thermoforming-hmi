@@ -6,20 +6,17 @@
 <title>Thermoforming HMI</title>
 <script src="cordova.js"></script>
 <style>
-:root{--bg:#0b1522;--p:#121e30;--p2:#16253a;--ln:#22344f;--tx:#dbe7f5;--dim:#8497b0;
---go:#38e2a0;--blue:#5ea8ff;--red:#f04b5f;--yel:#ffcf4a;--org:#ff7a59;--vio:#a77bff;--teal:#2fd6c4}
+:root{--bg:#0b1522;--p:#121e30;--p2:#16253a;--ln:#22344f;--tx:#dbe7f5;--dim:#8497b0;--go:#38e2a0;--blue:#5ea8ff;--red:#f04b5f;--yel:#ffcf4a;--org:#ff7a59;--vio:#a77bff;--teal:#2fd6c4}
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;user-select:none}
-html,body{margin:0;height:100%;background:var(--bg);color:var(--tx);overflow:hidden;
-font-family:"Barlow Condensed","Roboto Condensed","Arial Narrow",system-ui,sans-serif}
+html,body{margin:0;height:100%;background:var(--bg);color:var(--tx);overflow:hidden;font-family:"Barlow Condensed","Roboto Condensed","Arial Narrow",system-ui,sans-serif}
 #app{position:fixed;top:0;left:0;width:1160px;height:500px;transform-origin:0 0;display:grid;grid-template-rows:auto 1fr auto;gap:8px;padding:8px}
 .card{background:var(--p);border:1px solid var(--ln);border-radius:12px}
 button{font:inherit;color:#fff;border:0;cursor:pointer}
 button:active{filter:brightness(1.2);transform:translateY(2px)}
 button:disabled{opacity:.35;pointer-events:none}
-/* header */
 #top{display:flex;align-items:center;gap:4px;padding:6px 8px;min-width:0}
 #logo{width:38px;height:38px;margin-right:4px;border-radius:50%;object-fit:cover}
-#top h1{margin:0;font-size:15px;letter-spacing:.9px;white-space:nowrap;letter-spacing:.3px;line-height:1.05}
+#top h1{margin:0;font-size:15px;letter-spacing:.9px;white-space:nowrap;line-height:1.05}
 #top small{display:block;letter-spacing:.6px;margin-top:2px;font-size:11.5px;color:var(--dim)}
 .sp{flex:1}
 .chip{background:var(--p2);border:1px solid var(--ln);border-radius:20px;padding:5px 7px;font-size:12.5px;color:var(--dim);white-space:nowrap}
@@ -28,7 +25,6 @@ button.chip{color:var(--tx)} button.chip b{color:var(--yel)}
 #usbDot{display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--red);margin-right:4px}
 #state{background:var(--blue);border-radius:20px;padding:6px 14px;font-weight:700;font-size:17px;color:#fff}
 #state.run{background:var(--go);color:#06281d}#state.fault{background:var(--red)}
-/* middle */
 #mid{display:grid;grid-template-columns:1.3fr 1fr;gap:8px;min-height:0}
 #mimicWrap{display:grid;grid-template-rows:1fr auto;gap:6px;padding:8px;min-height:0}
 #mimic{width:100%;height:100%;min-height:0}
@@ -50,20 +46,17 @@ button.chip{color:var(--tx)} button.chip b{color:var(--yel)}
 #outs span{display:flex;align-items:center;justify-content:center;background:var(--p2);border-radius:7px;padding:2px;text-align:center;color:var(--dim)}
 #outs span.on{background:var(--go);color:#06281d;font-weight:700}
 #msg{margin-top:6px;background:#6a1f2b;border-radius:6px;padding:5px 9px;font-size:13px;display:none}
-/* bottom buttons */
 #btns{display:grid;grid-template-columns:1.6fr 1fr 1fr 1fr 1.15fr;gap:8px;height:74px}
 #btns button{border-radius:14px;font-weight:700;font-size:22px;box-shadow:0 5px 0 rgba(0,0,0,.35)}
 #bStart{background:var(--go);color:#06281d}#bStop{background:var(--blue)}
 #bEstop{background:var(--red);border:4px solid var(--yel);border-radius:40px!important}
 #bSet{background:#16253a;font-size:16px!important}#bOff{background:#6b7585;color:#1b2431;font-size:16px!important}
-/* digit pickers */
 .grps{display:flex;gap:10px;flex-wrap:wrap;justify-content:center;margin-bottom:6px}
 .grp{background:#16253a;border-radius:12px;padding:8px 10px;text-align:center}
 .grp .t{font-size:13px;color:var(--dim);margin-bottom:4px;max-width:190px;line-height:1.15;min-height:30px;display:flex;align-items:center;justify-content:center}
 .dg{display:inline-flex;flex-direction:column;align-items:center;margin:0 2px}
 .dg button{width:44px;height:30px;background:#2a4060;border-radius:8px;font-size:16px;padding:0;touch-action:manipulation}
 .dg .d{font-size:38px;font-weight:700;line-height:50px;background:#0b1522;border-radius:8px;width:44px;margin:3px 0;color:var(--tx)}
-/* modal */
 #ov{position:fixed;inset:0;background:rgba(3,8,15,.75);display:none;align-items:center;justify-content:center;z-index:9}
 #modal{background:#1b2b42;border-radius:16px;padding:16px 20px;width:min(440px,90%);max-height:94%;overflow:auto}
 #modal h3{margin:0 0 6px;font-size:20px}#modal p{margin:0 0 10px;font-size:13px;color:var(--dim)}
@@ -80,7 +73,7 @@ button.chip{color:var(--tx)} button.chip b{color:var(--yel)}
 <div id="app">
  <div id="top" class="card">
   <img id="logo" src="logo.png" alt="" onerror="this.style.display='none'">
-  <div><h1>GEAR ELECTROMECHANICAL ENGINEERING<small>Thermoforming machine control  ·  v4</small></h1></div>
+  <div><h1>GEAR ELECTROMECHANICAL ENGINEERING<small>Thermoforming machine control · v4</small></h1></div>
   <div class="sp"></div>
   <span class="chip" id="usbChip" style="cursor:pointer"><i id="usbDot"></i><span id="usbTxt">USB</span></span>
   <span class="chip" id="tempChip"><span id="tempSim">Temp <b id="tempV">25</b> / <b id="tempSp">180</b> °C</span><span id="tempLive" style="display:none">Heater <b id="tempLiveV">-</b></span></span>
@@ -90,7 +83,6 @@ button.chip{color:var(--tx)} button.chip b{color:var(--yel)}
   <span class="chip">Total <b id="tot">0</b></span>
   <div id="state">READY</div>
  </div>
-
  <div id="mid">
   <div class="card" id="mimicWrap">
    <svg id="mimic" viewBox="0 0 600 290" preserveAspectRatio="xMidYMid meet">
@@ -100,8 +92,7 @@ button.chip{color:var(--tx)} button.chip b{color:var(--yel)}
     </defs>
     <g fill="#ffcf4a"><rect x="248" y="4" width="4" height="15" rx="2"/><rect x="298" y="4" width="4" height="15" rx="2"/><rect x="348" y="4" width="4" height="15" rx="2"/></g>
     <g id="cycBox" style="cursor:pointer"><text id="cycLbl" x="430" y="20" fill="#8497b0" font-size="12" text-anchor="middle">CYCLE</text><text id="cycBig" x="430" y="52" fill="#38e2a0" font-size="36" font-weight="700" text-anchor="middle">0</text></g>
-    <g id="last" style="display:none"><text id="lastT" x="52" y="30" fill="#aebcd0" font-size="10">LAST PART</text>
-     <path d="M52 40 L136 40 L128 52 L116 62 L106 54 L96 62 L86 54 L76 62 L62 52Z" fill="none" stroke="#5ea8ff" stroke-width="3" stroke-linejoin="round"/></g>
+    <g id="last" style="display:none"><text id="lastT" x="52" y="30" fill="#aebcd0" font-size="10">LAST PART</text><path d="M52 40 L136 40 L128 52 L116 62 L106 54 L96 62 L86 54 L76 62 L62 52Z" fill="none" stroke="#5ea8ff" stroke-width="3" stroke-linejoin="round"/></g>
     <rect x="30" y="58" width="14" height="180" fill="#1b2a42"/><rect x="556" y="58" width="14" height="180" fill="#1b2a42"/>
     <g id="mold" style="transition:transform 1s;transform:translateY(0)"><path d="M190 300 L190 170 L235 170 L255 192 L275 180 L295 198 L315 180 L335 192 L355 170 L410 170 L410 300Z" fill="url(#gm)"/></g>
     <rect x="410" y="205" width="62" height="8" fill="#22344f"/><rect id="vbox" x="470" y="178" width="62" height="60" rx="10" fill="#16253a" stroke="#22344f" stroke-width="2"/>
@@ -111,5 +102,3 @@ button.chip{color:var(--tx)} button.chip b{color:var(--yel)}
     <path id="sheet" d="M37 95 L563 95" stroke="#5ea8ff" stroke-width="6" fill="none" stroke-linejoin="round" style="transition:d .8s,stroke .8s"/>
     <circle cx="37" cy="95" r="15" fill="#16253a" stroke="#fff" stroke-width="3"/><text id="c1" x="37" y="102" text-anchor="middle" fill="#fff" font-size="20">⊕</text>
     <circle cx="563" cy="95" r="15" fill="#16253a" stroke="#fff" stroke-width="3"/><text id="c2" x="563" y="102" text-anchor="middle" fill="#fff" font-size="20">⊕</text>
-    <g id="heater" style="transition:transform 1s;transform:translateX(0)">
-     <rect id="hglow" x="0" y="0" width="0" height="0" fill="url(#gh)"/>
