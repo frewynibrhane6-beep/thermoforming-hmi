@@ -1,0 +1,14 @@
+<?xml version='1.0' encoding='utf-8'?>
+<widget id="com.thermo.hmi" version="1.0.0" xmlns="http://w3.org" xmlns:cdv="http://apache.org">
+    <name>Thermoforming HMI</name>
+    <description>Thermoforming HMI Application</description>
+    <author email="dev@example.com" href="http://example.com">Frewyni Brhane</author>
+    <content src="index.html" />
+    <access origin="*" />
+    <allow-intent href="http://*/*" />
+    <allow-intent href="https://*/*" />
+    
+    <preference name="android-minSdkVersion" value="22" />
+    <preference name="android-targetSdkVersion" value="34" />
+    <preference name="android-compileSdkVersion" value="34" />
+</widget>
