@@ -81,7 +81,7 @@ button.chip{color:var(--tx)} button.chip b{color:var(--yel)}
   <img id="logo" src="logo.png" alt="" onerror="this.style.display='none'">
   <div><h1>GEAR ELECTROMECHANICAL ENGINEERING<small>Thermoforming machine control</small></h1></div>
   <div class="sp"></div>
-  <span class="chip"><i id="usbDot"></i><span id="usbTxt">USB</span></span>
+  <span class="chip" id="usbChip" style="cursor:pointer"><i id="usbDot"></i><span id="usbTxt">USB</span></span>
   <span class="chip" id="tempChip"><span id="tempSim">Temp <b id="tempV">25</b> / <b id="tempSp">180</b> °C</span><span id="tempLive" style="display:none">Heater <b id="tempLiveV">-</b></span></span>
   <span class="chip">Vacuum <b id="vacT">10</b> s · Fan <b id="fanT">30</b> s</span>
   <button class="chip" id="pcsChip">Pieces/cycle <b id="pcsChipV">6</b></button>
@@ -334,12 +334,42 @@ setInterval(()=>{
   setState('READY');idleText();$('bStart').disabled=false;$('bSet').disabled=false;
   $('msg').style.display='block';$('msg').style.background='#6a1f2b';$('msg').textContent='USB link lost. The controller keeps running its own sequence.';cycShow();
  }},500);
+/* ---- USB connection: tries several drivers, shows the real error, retries by itself ---- */
+const DRIVERS=[{},{driver:'Ch34xSerialDriver'},{driver:'CdcAcmSerialDriver'},{driver:'FtdiSerialDriver'}];
+let connecting=false,lastErr='',usbSince=0,connTimer=null;
+function usbFail(t){
+ connecting=false;clearTimeout(connTimer);$('usbTxt').textContent='USB retry';
+ if(!running){$('msg').style.display='block';$('msg').style.background='#6a1f2b';
+  $('msg').textContent='USB not connected: '+t+'. Plug the Mega in with an OTG cable and tap the USB button to retry.'}
+}
+function usbConnect(){
+ if(usb||connecting)return;
+ if(!window.serial){usbFail('USB plugin missing');return}
+ connecting=true;lastErr='';$('usbTxt').textContent='USB connecting';
+ clearTimeout(connTimer);connTimer=setTimeout(()=>{if(connecting)usbFail(lastErr||'no answer from the USB plugin (permission window not answered?)')},12000);
+ tryDriver(0);
+}
+function tryDriver(i){
+ if(i>=DRIVERS.length){usbFail(String(lastErr||'no USB device found'));return}
+ try{
+  serial.requestPermission(DRIVERS[i],()=>{
+   serial.open({baudRate:9600},()=>{
+    connecting=false;clearTimeout(connTimer);usb=true;usbSince=Date.now();
+    $('usbTxt').textContent='USB';$('usbDot').style.background='var(--go)';
+    if(!doneShown&&!fault&&!running)$('msg').style.display='none';
+    try{serial.registerReadCallback(onData,()=>{})}catch(e){}
+    if(!running&&!fault)idleText();
+   },e=>{lastErr=e;tryDriver(i+1)});
+  },e=>{lastErr=e;tryDriver(i+1)});
+ }catch(e){lastErr=e;tryDriver(i+1)}
+}
+$('usbChip').onclick=()=>{usb=false;connecting=false;clearTimeout(connTimer);usbConnect()};
 document.addEventListener('deviceready',()=>{
- if(!window.serial)return;
- serial.requestPermission({},()=>serial.open({baudRate:9600},()=>{
-  usb=true;$('usbDot').style.background='var(--go)';if(!running&&!fault)idleText();
-  serial.registerReadCallback(onData,()=>{});
- },()=>{}),()=>{});
+ usbConnect();
+ setInterval(()=>{
+  if(usb&&!live&&Date.now()-usbSince>8000){usb=false;try{serial.close(()=>{},()=>{})}catch(e){}}   /* cable pulled or no data: reconnect */
+  if(!usb)usbConnect();
+ },6000);
 },false);
 
 /* fit the whole screen: fixed 1160px design width, scaled to the window, rotated if upright */
