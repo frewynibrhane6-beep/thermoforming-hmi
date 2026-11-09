@@ -1,0 +1,42 @@
+name: Build APK
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+
+      - name: Build Cordova APK
+        run: |
+          npm install -g cordova
+          cordova create app com.thermo.hmi "Thermoforming HMI"
+          cd app
+          cp ../index.html www/index.html
+          cp ../logo.png www/logo.png
+          cp ../icon.png icon.png
+          sed -i 's#</widget>#<icon src="icon.png" /><preference name="Orientation" value="sensorLandscape" /><preference name="Fullscreen" value="true" /><preference name="android-minSdkVersion" value="24" /></widget>#' config.xml
+          cordova platform add android@13
+          cordova plugin add cordovarduino
+          cordova build android --debug
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: thermoforming-hmi-apk
+          path: app/platforms/android/app/build/outputs/apk/debug/app-debug.apk
