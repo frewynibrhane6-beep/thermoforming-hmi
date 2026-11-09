@@ -28,9 +28,15 @@ jobs:
           cordova create app com.thermo.hmi "Thermoforming HMI"
           cd app
           cp ../index.html www/index.html
-          cp ../logo.png www/logo.png
-          cp ../icon.png icon.png
-          sed -i 's#</widget>#<icon src="icon.png" /><preference name="Orientation" value="sensorLandscape" /><preference name="Fullscreen" value="true" /><preference name="android-minSdkVersion" value="24" /></widget>#' config.xml
+          IMG=$(ls ../*.png ../*.jpg ../*.jpeg 2>/dev/null | head -n 1 || true)
+          if [ -n "$IMG" ]; then
+            sudo apt-get update -qq
+            sudo apt-get install -y -qq imagemagick
+            convert "$IMG" -resize 512x512^ -gravity center -extent 512x512 icon.png
+            cp icon.png www/logo.png
+            sed -i 's#</widget>#<icon src="icon.png" /></widget>#' config.xml
+          fi
+          sed -i 's#</widget>#<preference name="Orientation" value="sensorLandscape" /><preference name="Fullscreen" value="true" /><preference name="android-minSdkVersion" value="24" /></widget>#' config.xml
           cordova platform add android@13
           cordova plugin add cordovarduino
           cordova build android --debug
