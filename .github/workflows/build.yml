@@ -29,13 +29,47 @@ jobs:
           npm install -g cordova
           cordova create app com.thermo.hmi "Thermoforming HMI"
           cd app
+          
+          # HTML ፋይሉን ወደ አፑ መገልበጥ
           cp ../index.html www/index.html
+          
+          # ሎጎ ካለ መገልበጥ
           if [ -f ../logo.png ]; then cp ../logo.png www/logo.png; fi
+          
+          # አፑ ኬብል ሲሰካ እንዳይዘጋ የሚከለክለውን የ config.xml ማስተካከያ እዚህ ላይ መጻፍ
+          cat << 'EOF' > config.xml
+          <?xml version='1.0' encoding='utf-8'?>
+          <widget id="com.thermo.hmi" version="1.0.0" xmlns="http://w3.org" xmlns:android="http://android.com" xmlns:cdv="http://apache.org">
+              <name>Thermoforming HMI</name>
+              <description>Thermoforming HMI Application</description>
+              <author email="dev@example.com" href="http://example.com">Frewyni Brhane</author>
+              <content src="index.html" />
+              <access origin="*" />
+              <allow-intent href="http://*/*" />
+              <allow-intent href="https://*/*" />
+              
+              <preference name="Orientation" value="sensorLandscape" />
+              <preference name="Fullscreen" value="true" />
+              <preference name="android-minSdkVersion" value="24" />
+              <preference name="android-targetSdkVersion" value="34" />
+              <preference name="android-compileSdkVersion" value="34" />
+
+              <!-- አፑ ዩኤስቢ ሲሰካ እንዳይበላሽ (Crash እንዳያደርግ) የሚከላከል መፍትሄ -->
+              <platform name="android">
+                  <edit-config file="AndroidManifest.xml" mode="merge" target="/manifest/application/activity[@android:name='MainActivity']">
+                      <activity android:launchMode="singleTop" />
+                  </edit-config>
+              </platform>
+          </widget>
+          EOF
+
+          # አይኮን ካለ በ XML ውስጥ መጨመር
           if [ -f ../icon.png ]; then
             cp ../icon.png icon.png
             sed -i 's#</widget>#<icon src="icon.png" /></widget>#' config.xml
           fi
-          sed -i 's#</widget>#<preference name="Orientation" value="sensorLandscape" /><preference name="Fullscreen" value="true" /><preference name="android-minSdkVersion" value="24" /></widget>#' config.xml
+
+          # አንድሮይድ እና የአርዱኢኖ ፕለጊን ጨምሮ አፑን መስራት
           cordova platform add android@13
           cordova plugin add cordovarduino
           cordova build android --debug
