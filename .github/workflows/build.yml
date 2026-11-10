@@ -1,147 +1,48 @@
-# =====================================================================
-# protocol.yaml - connection rules between the Arduino Mega and the
-# phone dashboard (index.html). Both sides MUST follow this file.
-# Changing a number here means changing thermoformer.ino AND index.html.
-# =====================================================================
-protocol_version: 1
+name: Build APK
 
-link:
-  medium: USB (OTG cable, phone is the USB host)
-  baud: 9600
-  format: 8N1
-  framing: one ASCII line per message, ends with "\n" ("\r" is ignored)
-  max_line_length: 23          # the Mega drops longer lines
-  encoding: ASCII only
-  bluetooth: not used          # no HC-05, no Web Bluetooth
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
 
-# ---------------------------------------------------------------------
-# Phone -> Mega
-# ---------------------------------------------------------------------
-commands:
-  START:
-    meaning: begin one cycle (same as the START button)
-    accepted_when: state 15 (READY) only; otherwise discarded
-  STOP:
-    meaning: all outputs off, go to HOME, clear any fault (same as the STOP button)
-    accepted_when: always, except while the E-STOP chain is open
-  ESTOP:
-    meaning: software emergency stop, goes to FAULT (code 11)
-    note: NOT safety rated. The hardware E-stop is the real one.
-  STATUS:
-    meaning: send one status line now (otherwise every 200 ms)
-  "CFG,<vacuum_s>,<fan_s>":
-    meaning: set forming (vacuum) time and cooling (fan) time in seconds
-    range: 1..999 each
-    example: "CFG,10,30"
-    effect: after the first valid CFG the potentiometer on A1 is ignored until reset
-    on_error: "E,ERR,CFG"
-  any_other_text:
-    effect: ignored, never acted on
-    reply: "E,ERR,CMD"
-  # Sent by the dashboard but not used by the Mega: SHUTDOWN_CONFIRM
-  # (the Mega answers E,ERR,CMD, which the dashboard ignores).
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
 
-# ---------------------------------------------------------------------
-# Mega -> Phone
-# ---------------------------------------------------------------------
-messages:
-  status:
-    format: "S,<state>,<output_mask>,<temp_ready>,<fault_code>"
-    period_ms: 200
-    fields:
-      state: integer 0..17, see states below
-      output_mask: integer, one bit per output, see outputs below
-      temp_ready: 1 when the external temperature controller reports "at temperature", else 0
-      fault_code: integer 0..11, see faults below (0 = none)
-    compatibility: the dashboard reads the first 4 fields and ignores extras
-  events:
-    "E,BOOT": the Mega has (re)started. Happens when the USB port is opened.
-    "E,CYCLE": one cycle finished. The dashboard adds Pieces/cycle to the total on this line.
-    "E,FAULT,<code>": a fault just started, code as below
-    "E,ERR,CMD": last command was not understood
-    "E,ERR,CFG": CFG values were out of range
+      - name: Setup JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
 
-# ---------------------------------------------------------------------
-# States. The numbers are fixed. "step" = which dashboard step is lit.
-# ---------------------------------------------------------------------
-states:
-  0:  {name: HOME,             step: none,            note: "waits for HOME_SWITCH (pin 25) then READY"}
-  1:  {name: CLAMP_SHEET,      step: "Clamp sheet",    outputs: [CLAMP_SOL],       ends_on: CLAMP_CLOSED_LIMIT,  timeout_ms: 5000}
-  2:  {name: HEATER_POSITION,  step: "Heater in",      outputs: [HEATER_MOVE_IN],  ends_on: HEATER_IN_LIMIT,     timeout_ms: 5000}
-  3:  {name: HEATING,          step: "Heating + soak", outputs: [],                ends_on: "TEMP_READY_SIGNAL stable for 5000 ms", timeout_ms: 300000}
-  4:  {name: HEATER_RETRACT,   step: "Heater out",     outputs: [HEATER_MOVE_OUT], ends_on: HEATER_OUT_LIMIT,    timeout_ms: 5000}
-  5:  {name: MOLD_UP_STEP,     step: "Mold up",        outputs: [MOLD_UP_SOL],     ends_on: MOLD_UP_LIMIT,       timeout_ms: 5000}
-  6:  {name: MOLD_UP_CONFIRM,  step: "Mold up",        note: "MOLD_UP_LIMIT must still be active, else fault 7"}
-  7:  {name: VACUUM_ON,        step: "Vacuum forming", note: "one-loop transition: pump + valve on, fan off"}
-  8:  {name: FORMING,          step: "Vacuum forming", outputs: [VACUUM_PUMP, VACUUM_SOL], ends_on: "vacuum time (A1 pot or CFG)"}
-  9:  {name: VACUUM_OFF,       step: "Vacuum forming", note: "one-loop transition: pump + valve off, fan on"}
-  10: {name: COOLING_STEP,     step: "Cooling fan",    outputs: [COOLING_FAN],     ends_on: "fan time (CFG, default 5 s)"}
-  11: {name: MOLD_DOWN_STEP,   step: "Mold down",      outputs: [MOLD_DOWN_SOL],   ends_on: MOLD_DOWN_LIMIT,     timeout_ms: 5000}
-  12: {name: RELEASE_SHEET,    step: "Release part",   outputs: [RELEASE_SOL],     ends_on: "1000 ms"}
-  13: {name: SHEET_PULLING,    step: "Pull material",  outputs: [ROLLER_MOTOR],    ends_on: ROLLER_LIMIT,        timeout_ms: 5000}
-  14: {name: CYCLE_COMPLETE,   step: "Pull material",  note: "300 ms pause, sends E,CYCLE, then READY"}
-  15: {name: READY,            step: none,             note: "waits for START (button edge or phone)"}
-  16: {name: FAULT,            step: none,             outputs: [ALARM_BUZZER], note: "all else off; only STOP releases it"}
-  17: {name: POWER_RECOVERY,   step: none,             outputs: [ALARM_BUZZER], note: "power was cut mid-cycle; only STOP releases it"}
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
 
-faults:
-  0:  none
-  1:  "E-STOP chain open (pin 24)"
-  2:  "clamp did not close in time"
-  3:  "heater carriage did not reach IN in time"
-  4:  "temperature never ready within 300 s"
-  5:  "heater carriage did not reach OUT in time"
-  6:  "mold did not reach UP in time"
-  7:  "mold up switch lost after it was reached"
-  8:  "mold did not reach DOWN in time"
-  9:  "roller did not reach its limit in time"
-  10: "power cut during a cycle (state 17)"
-  11: "software E-STOP from the phone"
+      - name: Build debug APK (Cordova creates the Android project and runs Gradle)
+        run: |
+          npm install -g cordova
+          cordova create app com.thermo.hmi "Thermoforming HMI"
+          cd app
+          cp ../index.html www/index.html
+          if [ -f ../logo.png ]; then cp ../logo.png www/logo.png; fi
+          if [ -f ../icon.png ]; then
+            cp ../icon.png icon.png
+            sed -i 's#</widget>#<icon src="icon.png" /></widget>#' config.xml
+          fi
+          sed -i 's#</widget>#<preference name="Orientation" value="sensorLandscape" /><preference name="Fullscreen" value="true" /><preference name="android-minSdkVersion" value="24" /></widget>#' config.xml
+          cordova platform add android@13
+          cordova plugin add cordovarduino
+          cordova build android --debug
 
-# ---------------------------------------------------------------------
-# Pins (confirmed). Inputs: switch between pin and GND, pull-up on,
-# every input debounced 20 ms.
-# ---------------------------------------------------------------------
-inputs:
-  START_BTN:          {pin: 22, active: LOW}
-  STOP_BTN:           {pin: 23, active: LOW}
-  ESTOP_MONITOR:      {pin: 24, active: "LOW (const ESTOP_TRIPPED_LEVEL) - CONFIRM"}
-  HOME_SWITCH:        {pin: 25, active: LOW}
-  CLAMP_CLOSED_LIMIT: {pin: 26, active: LOW}
-  CLAMP_OPEN_LIMIT:   {pin: 27, active: LOW, used: "read only"}
-  HEATER_IN_LIMIT:    {pin: 28, active: LOW}
-  HEATER_OUT_LIMIT:   {pin: 29, active: LOW}
-  MOLD_DOWN_LIMIT:    {pin: 30, active: LOW}
-  MOLD_UP_LIMIT:      {pin: 31, active: LOW}
-  TEMP_READY_SIGNAL:  {pin: 32, active: "HIGH, no pull-up (const TEMP_READY_ACTIVE_HIGH) - add external 10k pull-down, max 5 V"}
-  RELEASE_LIMIT:      {pin: 33, active: LOW, used: "read only"}
-  ROLLER_LIMIT:       {pin: 34, active: LOW}
-  TIME_POT:           {pin: A1, range: "0..1023 -> 1..30 s forming time, until CFG"}
-
-# Output bit n of the status mask = relay n below.
-outputs:
-  0:  {name: CLAMP_SOL,       pin: 40}
-  1:  {name: HEATER_MOVE_IN,  pin: 41}
-  2:  {name: HEATER_MOVE_OUT, pin: 42}
-  3:  {name: MOLD_DOWN_SOL,   pin: 43}
-  4:  {name: MOLD_UP_SOL,     pin: 44}
-  5:  {name: VACUUM_PUMP,     pin: 45}
-  6:  {name: VACUUM_SOL,      pin: 46}
-  7:  {name: RELEASE_SOL,     pin: 47}
-  8:  {name: ALARM_BUZZER,    pin: 48}
-  9:  {name: COOLING_FAN,     pin: 49}
-  10: {name: ROLLER_MOTOR,    pin: 50}
-relay_polarity: "const RELAY_ACTIVE_HIGH = true in the sketch. Set false for active-low relay boards."
-
-# Dashboard mapping (already in index.html, no change needed):
-#   state 1->step 0 ... 13->step 9, 14->step 9, 15 and 0 idle, 16 and 17 fault.
-
-# ---------------------------------------------------------------------
-# Rules both sides follow
-# ---------------------------------------------------------------------
-rules:
-  - The Mega never depends on the phone. Without the phone it still obeys its buttons and finishes the cycle it is in.
-  - Auto-repeat is done by the phone (it sends START again at each READY). If the phone disconnects, the machine stops in READY after the current cycle.
-  - The phone treats 2.5 s without a status line as "link lost" and reconnects.
-  - Opening the USB port can restart the Mega. If it was mid-cycle, it comes back in state 17 and needs STOP.
-  - The Arduino does not control the heating element. The external controller does, and the independent thermal fuse protects it.
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: thermoforming-hmi-apk
+          path: app/platforms/android/app/build/outputs/apk/debug/app-debug.apk
+          if-no-files-found: error
