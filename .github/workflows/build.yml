@@ -27,14 +27,13 @@ jobs:
       - name: Build debug APK (Cordova creates the Android project and runs Gradle)
         run: |
           npm install -g cordova
-          # የአፑን ቨርዥን ወደ 1.0.1 ከፍ አድርገነዋል የድሮው ዳታ እንዲጠፋ
+          # ፎልደሩ 'app' ተብሎ እንዲፈጠር ትዕዛዙ እዚህ ላይ ተስተካክሏል
           cordova create app com.thermo.hmi "Thermoforming HMI" --version=1.0.1
           cd app
           
           cp ../index.html www/index.html
           if [ -f ../logo.png ]; then cp ../logo.png www/logo.png; fi
           
-          # ለስልኩ የሚስማማውን ትክክለኛውን የ config.xml እዚህ ላይ እንጽፋለን
           cat << 'EOF' > config.xml
           <?xml version='1.0' encoding='utf-8'?>
           <widget id="com.thermo.hmi" version="1.0.1" xmlns="http://w3.org" xmlns:android="http://android.com" xmlns:cdv="http://apache.org">
@@ -48,12 +47,10 @@ jobs:
               
               <preference name="Orientation" value="sensorLandscape" />
               <preference name="Fullscreen" value="true" />
-              <!-- ለአዲሶቹ ስልኮች እንዲስማማ የተስተካከለ ቁጥር -->
               <preference name="android-minSdkVersion" value="26" />
               <preference name="android-targetSdkVersion" value="34" />
               <preference name="android-compileSdkVersion" value="34" />
 
-              <!-- አፑ ኬብል ሲሰካ እንዳይዘጋ እና እንዳይደናገጥ የሚከላከል -->
               <platform name="android">
                   <edit-config file="AndroidManifest.xml" mode="merge" target="/manifest/application/activity[@android:name='MainActivity']">
                       <activity android:launchMode="singleTop" android:configChanges="orientation|keyboardHidden|keyboard|screenSize|locale" />
@@ -67,7 +64,6 @@ jobs:
             sed -i 's#</widget>#<icon src="icon.png" /></widget>#' config.xml
           fi
 
-          # ለአዲሶቹ ስልኮች የሚስማማውን የተረጋጋውን አንድሮይድ ፕላትፎርም እንጠቀማለን
           cordova platform add android@12.0.0
           cordova plugin add cordovarduino
           cordova build android --debug
