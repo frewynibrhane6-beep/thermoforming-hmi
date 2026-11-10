@@ -5,9 +5,6 @@ on:
   push:
     branches: [main]
 
-permissions:
-  contents: read
-
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -30,45 +27,92 @@ jobs:
       - name: Build debug APK (Cordova creates the Android project and runs Gradle)
         run: |
           npm install -g cordova
-          mkdir -p app
+          cordova create app com.thermo.hmi "Thermoforming HMI"
           cd app
-          cordova create . com.thermo.hmi "Thermoforming HMI" --version=1.0.1
           cp ../index.html www/index.html
           if [ -f ../logo.png ]; then cp ../logo.png www/logo.png; fi
-
-          cat << 'EOF' > config.xml
-          <?xml version='1.0' encoding='utf-8'?>
-          <widget id="com.thermo.hmi" version="1.0.1" xmlns="http://w3.org" xmlns:android="http://android.com" xmlns:cdv="http://apache.org">
-              <name>Thermoforming HMI</name>
-              <description>Thermoforming HMI Application</description>
-              <author email="dev@example.com" href="http://example.com">Frewyni Brhane</author>
-              <content src="index.html" />
-              <access origin="*" />
-              <allow-intent href="http://*/*" />
-              <allow-intent href="https://*/*" />
-
-              <preference name="Orientation" value="sensorLandscape" />
-              <preference name="Fullscreen" value="true" />
-              <preference name="android-minSdkVersion" value="26" />
-              <preference name="android-targetSdkVersion" value="34" />
-              <preference name="android-compileSdkVersion" value="34" />
-
-              <platform name="android">
-                  <edit-config file="AndroidManifest.xml" mode="merge" target="/manifest/application/activity[@android:name='MainActivity']">
-                      <activity android:launchMode="singleTop" android:configChanges="orientation|keyboardHidden|keyboard|screenSize|locale|uiMode" />
-                  </edit-config>
-              </platform>
-          </widget>
-          EOF
-
           if [ -f ../icon.png ]; then
             cp ../icon.png icon.png
             sed -i 's#</widget>#<icon src="icon.png" /></widget>#' config.xml
           fi
-
-          cordova platform add android@12.0.0
+          sed -i 's#</widget>#<preference name="Orientation" value="sensorLandscape" /><preference name="Fullscreen" value="true" /><preference name="android-minSdkVersion" value="24" /><preference name="android-targetSdkVersion" value="30" /></widget>#' config.xml
+          cordova platform add android@13
           cordova plugin add cordovarduino
-          cordova build android --debug
+          python3 - <<'PY'
+          import glob
+
+          def rewrite(src, token, fn):
+              out, i = '', 0
+              while True:
+                  j = src.find(token, i)
+                  if j < 0:
+                      return out + src[i:]
+                  k = j + len(token)
+                  depth, p = 1, k
+                  while p < len(src) and depth:
+                      if src[p] == '(':
+                          depth += 1
+                      elif src[p] == ')':
+                          depth -= 1
+                      p += 1
+                  out += src[i:j] + fn(src[k:p-1])
+                  i = p
+
+          def split_args(s):
+              args, depth, cur = [], 0, ''
+              for ch in s:
+                  if ch == ',' and depth == 0:
+                      args.append(cur)
+                      cur = ''
+                      continue
+                  if ch in '([{':
+                      depth += 1
+                  if ch in ')]}':
+                      depth -= 1
+                  cur += ch
+              args.append(cur)
+              return [a.strip() for a in args]
+
+          def fix_pending(inner):
+              a = split_args(inner)
+              if len(a) != 4:
+                  return 'PendingIntent.getBroadcast(' + inner + ')'
+              ctx, req, intent, flags = a
+              if 'setPackage' not in intent:
+                  intent += '.setPackage(' + ctx + '.getPackageName())'
+              if '0x02000000' not in flags and 'FLAG_MUTABLE' not in flags and 'FLAG_IMMUTABLE' not in flags:
+                  flags = '0x02000000' if flags in ('0', '') else '0x02000000 | ' + flags
+              return 'PendingIntent.getBroadcast(' + ', '.join([ctx, req, intent, flags]) + ')'
+
+          def fix_receiver(inner):
+              a = split_args(inner)
+              if len(a) == 2:
+                  return '.registerReceiver(' + inner + ', 4)'
+              return '.registerReceiver(' + inner + ')'
+
+          files = [f for f in glob.glob('plugins/**/*.java', recursive=True) + glob.glob('platforms/**/*.java', recursive=True)
+                   if 'serial' in f.lower() or 'drangies' in f.lower()]
+          done = 0
+          for f in files:
+              s = open(f, encoding='utf-8', errors='ignore').read()
+              if 'PendingIntent' not in s and 'registerReceiver' not in s:
+                  continue
+              t = rewrite(s, 'PendingIntent.getBroadcast(', fix_pending)
+              t = rewrite(t, '.registerReceiver(', fix_receiver)
+              if t != s:
+                  open(f, 'w', encoding='utf-8').write(t)
+                  print('USB PATCH APPLIED:', f)
+                  done += 1
+              else:
+                  print('USB patch: nothing to change in', f)
+          if not done:
+              print('WARNING: USB patch changed nothing (source differs from what was expected)')
+          PY
+          cordova build android --debug || {
+            echo "Build with targetSdk 30 failed - retrying with the default target SDK"
+            sed -i 's#<preference name="android-targetSdkVersion" value="30" />##' config.xml
+            cordova build android --debug
+          }
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
