@@ -1,4 +1,3 @@
-```yaml
 name: Build APK
 
 on:
@@ -86,4 +85,3 @@ jobs:
           name: thermoforming-hmi-apk
           path: app/platforms/android/app/build/outputs/apk/debug/app-debug.apk
           if-no-files-found: error
-```
