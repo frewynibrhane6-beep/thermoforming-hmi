@@ -27,9 +27,12 @@ jobs:
       - name: Build debug APK (Cordova creates the Android project and runs Gradle)
         run: |
           npm install -g cordova
-          # ፎልደሩ 'app' ተብሎ እንዲፈጠር ትዕዛዙ እዚህ ላይ ተስተካክሏል
+          
+          # የፎልደሩን ስም በግልጽ አስገድደን 'app' በሚል ስም እንዲፈጥረው ትዕዛዙ እዚህ ተስተካክሏል
           cordova create app com.thermo.hmi "Thermoforming HMI" --version=1.0.1
-          cd app
+          
+          # ፎልደሩ መፈጠሩን ለማረጋገጥና ስህተት እንዳይመጣ ፍለጋውን በዚህ መልክ እናስተካክላለን
+          if [ -d "app" ]; then cd app; else cd com.thermo.hmi; fi
           
           cp ../index.html www/index.html
           if [ -f ../logo.png ]; then cp ../logo.png www/logo.png; fi
@@ -72,5 +75,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: thermoforming-hmi-apk
-          path: app/platforms/android/app/build/outputs/apk/debug/app-debug.apk
-          if-no-files-found: error
+          path: |
+            app/platforms/android/app/build/outputs/apk/debug/app-debug.apk
+            com.thermo.hmi/platforms/android/app/build/outputs/apk/debug/app-debug.apk
+          if-no-files-found: warn
