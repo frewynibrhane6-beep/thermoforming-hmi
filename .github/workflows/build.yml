@@ -28,14 +28,12 @@ jobs:
         run: |
           npm install -g cordova
           
-          # የፎልደሩን ስም በግልጽ አስገድደን 'app' በሚል ስም እንዲፈጥረው ትዕዛዙ እዚህ ተስተካክሏል
-          cordova create app com.thermo.hmi "Thermoforming HMI" --version=1.0.1
+          # አፑን በቀጥታ አሁን ባለንበት ዋና ማውጫ (.) ላይ እንዲፈጥረው ትዕዛዙ ተስተካክሏል (ፎልደር አይፈጥርም)
+          cordova create . com.thermo.hmi "Thermoforming HMI" --version=1.0.1
           
-          # ፎልደሩ መፈጠሩን ለማረጋገጥና ስህተት እንዳይመጣ ፍለጋውን በዚህ መልክ እናስተካክላለን
-          if [ -d "app" ]; then cd app; else cd com.thermo.hmi; fi
-          
-          cp ../index.html www/index.html
-          if [ -f ../logo.png ]; then cp ../logo.png www/logo.png; fi
+          # ፎልደር ስላልተፈጠረ 'cd' ማድረግ አያስፈልግም፣ ቀጥታ ፋይሉን እንገለብጣለን
+          cp index.html www/index.html
+          if [ -f logo.png ]; then cp logo.png www/logo.png; fi
           
           cat << 'EOF' > config.xml
           <?xml version='1.0' encoding='utf-8'?>
@@ -62,8 +60,7 @@ jobs:
           </widget>
           EOF
 
-          if [ -f ../icon.png ]; then
-            cp ../icon.png icon.png
+          if [ -f icon.png ]; then
             sed -i 's#</widget>#<icon src="icon.png" /></widget>#' config.xml
           fi
 
@@ -75,7 +72,5 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: thermoforming-hmi-apk
-          path: |
-            app/platforms/android/app/build/outputs/apk/debug/app-debug.apk
-            com.thermo.hmi/platforms/android/app/build/outputs/apk/debug/app-debug.apk
-          if-no-files-found: warn
+          path: platforms/android/app/build/outputs/apk/debug/app-debug.apk
+          if-no-files-found: error
