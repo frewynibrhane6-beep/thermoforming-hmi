@@ -30,10 +30,10 @@ jobs:
           cordova create app com.thermo.hmi "Thermoforming HMI"
           cd app
           cp ../index.html www/index.html
-          if [ -f ../logo.png ]; then cp ../logo.png www/logo.png; fi
-          if [ -f ../icon.png ]; then
-            cp ../icon.png icon.png
-            sed -i 's#</widget>#<icon src="icon.png" /></widget>#' config.xml
+          if [ -f ../logo.png ]; then
+            python3 -c 'from PIL import Image; Image.open("../logo.png").convert("RGBA").save("icon.png", "PNG")' 2>/dev/null || cp ../logo.png icon.png
+            cp icon.png www/logo.png
+            sed -i 's#</widget>#<icon src="icon.png" /><preference name="AndroidWindowSplashScreenAnimatedIcon" value="icon.png" /><preference name="AndroidWindowSplashScreenBackground" value="#0b1522" /></widget>#' config.xml
           fi
           sed -i 's#</widget>#<preference name="Orientation" value="sensorLandscape" /><preference name="Fullscreen" value="true" /><preference name="android-minSdkVersion" value="24" /><preference name="android-targetSdkVersion" value="30" /></widget>#' config.xml
           cordova platform add android@13
