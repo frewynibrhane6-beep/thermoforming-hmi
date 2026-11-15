@@ -8,6 +8,8 @@
     <allow-intent href="http://*/*" />
     <allow-intent href="https://*/*" />
     
+    <icon src="logo.png" />
+
     <preference name="android-minSdkVersion" value="22" />
     <preference name="android-targetSdkVersion" value="34" />
     <preference name="android-compileSdkVersion" value="34" />
